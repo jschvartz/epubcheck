@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
@@ -103,8 +104,11 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     factory.setNamespaceAware(true);
     factory.setValidating(false);
 
+
     try
     {
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       factory.setFeature("http://xml.org/sax/features/validation", false);
       if (context.version == EPUBVersion.VERSION_3)
       {
@@ -329,7 +333,8 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     else
     {
       report.message(MessageId.RSC_005,
-          EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()), message);
+          EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()),
+          message);
     }
   }
 
@@ -337,14 +342,16 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     throws SAXException
   {
     report.message(MessageId.RSC_016,
-        EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()), ex.getMessage());
+        EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()),
+        ex.getMessage());
   }
 
   public void warning(SAXParseException ex)
     throws SAXException
   {
     report.message(MessageId.RSC_017,
-        EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()), ex.getMessage());
+        EPUBLocation.create(path, ex.getLineNumber(), ex.getColumnNumber()),
+        ex.getMessage());
   }
 
   public void characters(char[] arg0, int arg1, int arg2)
@@ -739,32 +746,9 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
           report.message(MessageId.HTM_004, EPUBLocation.create(path), publicId, complete);
         }
       }
-      else if ("image/svg+xml".equals(mimeType) && "svg".equalsIgnoreCase(root))
+      else if (publicId != null || systemId != null)
       {
-        if (!(checkDTD("-//W3C//DTD SVG 1.1//EN",
-            "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd", publicId, systemId)
-            || checkDTD("-//W3C//DTD SVG 1.0//EN",
-                "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd", publicId, systemId)
-            || checkDTD("-//W3C//DTD SVG 1.1 Basic//EN",
-                "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-basic.dtd", publicId, systemId) || checkDTD(
-              "-//W3C//DTD SVG 1.1 Tiny//EN",
-              "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-tiny.dtd", publicId, systemId)))
-        {
-          report.message(MessageId.HTM_009, EPUBLocation.create(path));
-        }
-      }
-      else if (mimeType != null && "application/x-dtbncx+xml".equals(mimeType))
-      {
-        String complete = "<!DOCTYPE ncx PUBLIC \"-//NISO//DTD ncx 2005-1//EN\" "
-            + "\n \"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd\">";
-        if (matchDoctypeId("-//NISO//DTD ncx 2005-1//EN", publicId, complete))
-        {
-          matchDoctypeId("http://www.daisy.org/z3986/2005/ncx-2005-1.dtd", systemId, complete);
-        }
-      }
-      else
-      {
-        report.message(MessageId.HTM_009, EPUBLocation.create(path));
+        report.message(MessageId.OPF_073, getLocation());
       }
     }
 
@@ -786,9 +770,9 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
 
   boolean matchDoctypeId(String expected, String given, String messageParam)
   {
-    if (given != null && !expected.equals(given))
+    if (!expected.equals(given))
     {
-      report.message(MessageId.HTM_004, EPUBLocation.create(path), given, messageParam);
+      report.message(MessageId.HTM_004, EPUBLocation.create(path), given==null?"":given, messageParam);
       return false;
     }
     return true;
@@ -808,7 +792,8 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     {
       // This message may never be reported. Undeclared entities result in a Sax
       // Parser Error and message RSC_005.
-      report.message(MessageId.HTM_011, EPUBLocation.create(path, getLineNumber(), getColumnNumber(), ent));
+      report.message(MessageId.HTM_011,
+          EPUBLocation.create(path, getLineNumber(), getColumnNumber(), ent));
     }
   }
 
@@ -847,10 +832,10 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
       }
     }
 
-    if (context.version == EPUBVersion.VERSION_3
-        && ("application/xhtml+xml".equals(context.mimeType)))
+    if (context.version == EPUBVersion.VERSION_3)
     {
-      report.message(MessageId.HTM_003, EPUBLocation.create(path, getLineNumber(), getColumnNumber(), name), name);
+      report.message(MessageId.HTM_003,
+          EPUBLocation.create(path, getLineNumber(), getColumnNumber(), name), name);
       return;
     }
     entities.add(name);
@@ -888,9 +873,11 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
   {
     return documentLocator.getColumnNumber();
   }
-  
-  public EPUBLocation getLocation() {
-    return EPUBLocation.create(path,documentLocator.getLineNumber(),documentLocator.getColumnNumber());
+
+  public EPUBLocation getLocation()
+  {
+    return EPUBLocation.create(path, documentLocator.getLineNumber(),
+        documentLocator.getColumnNumber());
   }
 
   public String getXMLVersion()
@@ -1001,7 +988,7 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     }
 
     String encoding = header.substring(encIndex + 1, encEnd);
-    return encoding.toUpperCase();
+    return encoding.toUpperCase(Locale.ROOT);
   }
 
   static
@@ -1021,7 +1008,7 @@ public class XMLParser extends DefaultHandler implements LexicalHandler, DeclHan
     // 2.0 dtd, probably never published
     map.put("http://www.idpf.org/dtds/2007/opf.dtd",
         ResourceUtil.getResourcePath("schema/20/dtd/opf20.dtd"));
-    // xhtml 1.1
+    // xhtml 1.0
     map.put("http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd",
         ResourceUtil.getResourcePath("schema/20/dtd/xhtml1-transitional.dtd"));
     map.put("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd",

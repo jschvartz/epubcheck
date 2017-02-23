@@ -23,6 +23,7 @@
 package com.adobe.epubcheck.api;
 
 import java.util.Collections;
+import java.util.Locale;
 
 import org.junit.Test;
 
@@ -43,16 +44,18 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   }
 
   @Test
-  public void testValidateEPUBPLoremMultipleRenditions()
+  public void testDuplicateID()
   {
-    Collections.addAll(expectedWarnings, MessageId.RSC_019);
-    testValidateDocument("valid/lorem-xrenditions");
+    // 2 errors x 2 sets of duplicate IDs
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005,
+        MessageId.RSC_005);
+    testValidateDocument("invalid/duplicate-id");
   }
 
   @Test
   public void testValidateEPUBPLoremMultipleRenditionsUnmanifested()
   {
-    Collections.addAll(expectedWarnings, MessageId.RSC_019, MessageId.OPF_003);
+    Collections.addAll(expectedWarnings, MessageId.RSC_019, MessageId.RSC_017, MessageId.OPF_003);
     testValidateDocument("invalid/lorem-xrenditions-unmanifested");
   }
 
@@ -236,7 +239,7 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   @Test
   public void testValidateEPUB30_CSSImport_invalid_1()
   {
-    Collections.addAll(expectedErrors, MessageId.RSC_001, MessageId.RSC_001);
+    Collections.addAll(expectedErrors, MessageId.RSC_001);
     testValidateDocument("invalid/lorem-css-import-1/");
   }
 
@@ -300,7 +303,7 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   @Test
   public void testValidateEPUB30_CSSMediaType_invalid()
   {
-    Collections.addAll(expectedWarnings, MessageId.CSS_010);
+    Collections.addAll(expectedErrors, MessageId.CSS_010);
     // CSS with declared type 'xhtml/css' should raise a "no fallback" error
     testValidateDocument("invalid/lorem-css-wrongtype/");
   }
@@ -383,7 +386,7 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   @Test
   public void testValidateEPUB30_nonresolvingFallback()
   {
-    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.OPF_040, MessageId.MED_003);
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.MED_003);
     // dupe messages, tbf
     testValidateDocument("invalid/fallbacks-nonresolving/");
   }
@@ -476,6 +479,28 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   {
     testValidateDocument("invalid/custom-ns-attr/");
   }
+  
+  /**
+   * Also tests locale-independent character case transformations (such as
+   * lower-casing). Specifically, in issue 711, when the default locale is set
+   * to Turkish, lower-casing resulted in incorrect vocabulary strings (for
+   * "PAGE_LIST" enum constant name relevant to the original issue report, as
+   * well as for numerous other strings). Therefore, a Turkish locale is set as
+   * the default at the beginning of the test (the original locale is restored
+   * at the end of the test).
+   */
+  @Test
+  public void testPageList()
+  {
+    Locale l = Locale.getDefault();
+    // E.g., tests that I is not lower-cased to \u0131 based on locale's collation rules:
+    Locale.setDefault(new Locale("tr", "TR"));
+    try {
+      testValidateDocument("valid/page-list");
+    } finally { // restore the original locale
+      Locale.setDefault(l);
+    }
+  }
 
   @Test
   public void testIssue188()
@@ -558,15 +583,207 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   }
 
   @Test
+  public void testIssue305()
+  {
+    expectedErrors.add(MessageId.OPF_073);
+    testValidateDocument("invalid/ncx-external-identifier");
+  }
+
+  @Test
+  public void testIssue332()
+  {
+    testValidateDocument("valid/issue332-idspaces");
+  }
+
+  @Test
   public void testIssue419()
   {
     testValidateDocument("valid/issue419/");
   }
 
   @Test
-  public void testCollectionPreview()
+  public void testIssue5()
   {
-    testValidateDocument("valid/collections-preview/");
+    testValidateDocument("valid/issue567/");
+  }
+  
+  @Test
+  public void testIssue615_langtag() {
+    testValidateDocument("valid/issue615-langtags/");
+  }
+  
+  @Test
+  public void testResource_Missing() {
+    Collections.addAll(expectedErrors, MessageId.RSC_001);
+    testValidateDocument("invalid/resource-missing/");
+  }
+  
+  @Test
+  public void testResource_RefInXHTML_Undeclared() {
+    Collections.addAll(expectedErrors, MessageId.RSC_007);
+    testValidateDocument("invalid/resource-missing-refinxhtml/");
+  }
+
+  @Test
+  public void testFallback_XPGT_Explicit()
+  {
+    testValidateDocument("valid/xpgt-explicit-fallback/");
+  }
+
+  @Test
+  public void testFallback_XPGT_Implicit()
+  {
+    testValidateDocument("valid/xpgt-implicit-fallback/");
+  }
+
+  @Test
+  public void testFallback_XPGT_NoFallback()
+  {
+    Collections.addAll(expectedErrors, MessageId.CSS_010);
+    testValidateDocument("invalid/xpgt-no-fallback/");
+  }
+  
+  @Test
+  public void testFont_OpenType() {
+    testValidateDocument("valid/font-opentype");
+  }
+  
+  @Test
+  public void testFont_NonCoreMediaType() {
+    testValidateDocument("valid/font-othermediatype");
+  }
+  
+  @Test
+  public void testFXL_WithSVG() {
+    testValidateDocument("valid/fxl-svg/");
+  }
+  
+  @Test
+  public void testFXL_WithSVG_NoViewbox() {
+    expectedErrors.add(MessageId.HTM_048);
+    testValidateDocument("invalid/fxl-svg-noviewbox/");
+  }
+  
+  @Test
+  public void testFXL_WithSVGNotInSpine() {
+    testValidateDocument("valid/fxl-svg-notinspine/");
+  }
+  
+  @Test
+  public void testLink_MissingResource(){
+    Collections.addAll(expectedWarnings, MessageId.RSC_007w);
+    testValidateDocument("invalid/link-missing/");
+  }
+
+  @Test
+  public void testMultipleRenditions()
+  {
+    testValidateDocument("valid/multiple-renditions");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_MultipleNavs()
+  {
+    testValidateDocument("valid/multiple-renditions-mapping-multiplenavs");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_NotXHTML()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/multiple-renditions-mapping-nonxhtml");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_MoreThanOne()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    // side-effect or more than one mapping: only one is recognized as declared,
+    // hence the OPF_003
+    Collections.addAll(expectedWarnings, MessageId.OPF_003);
+    testValidateDocument("invalid/multiple-renditions-multiple-mappings");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_NoVersionMeta()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/multiple-renditions-mapping-noversion");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_NoResourceMap()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/multiple-renditions-mapping-noresourcemap");
+  }
+
+  @Test
+  public void testMultipleRenditions_Mapping_UnidentifiedNavType()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/multiple-renditions-mapping-untypednav");
+  }
+
+  @Test
+  public void testPreview_Embedded()
+  {
+    testValidateDocument("valid/preview-embedded/");
+  }
+
+  @Test
+  public void testPreview_Embedded_NoManifest()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/preview-embedded-nomanifest/");
+  }
+
+  @Test
+  public void testPreview_Embedded_NoLinks()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/preview-embedded-nolinks/");
+  }
+
+  @Test
+  public void testPreview_Embedded_LinkNotContentDoc()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_075);
+    testValidateDocument("invalid/preview-embedded-linknoCD/");
+  }
+
+  @Test
+  public void testPreview_Embedded_LinkWithCFI()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_076);
+    testValidateDocument("invalid/preview-embedded-linkcfi/");
+  }
+
+  @Test
+  public void testPreview_Pub()
+  {
+    testValidateDocument("valid/preview-pub/");
+  }
+
+  @Test
+  public void testPreview_Pub_NoType()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/preview-pub-notype/", EPUBProfile.PREVIEW);
+  }
+
+  @Test
+  public void testPreview_Pub_NoSource()
+  {
+    Collections.addAll(expectedWarnings, MessageId.RSC_017);
+    testValidateDocument("invalid/preview-pub-nosource/");
+  }
+
+  @Test
+  public void testPreview_Pub_SameSourceId()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/preview-pub-samesourceid/");
   }
 
   @Test
@@ -580,6 +797,12 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   public void testEdupub_Basic()
   {
     testValidateDocument("valid/edu-basic/", EPUBProfile.EDUPUB);
+  }
+  
+  @Test
+  public void testEdupub_FXL()
+  {
+    testValidateDocument("valid/edu-fxl/", EPUBProfile.EDUPUB);
   }
 
   @Test
@@ -618,8 +841,6 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
   @Test
   public void testEdupub_MissingLOx()
   {
-    Collections.addAll(expectedWarnings, MessageId.NAV_005, MessageId.NAV_006, MessageId.NAV_007,
-        MessageId.NAV_008);
     testValidateDocument("invalid/edu-missing-lox/", EPUBProfile.EDUPUB);
   }
 
@@ -682,5 +903,175 @@ public class Epub30CheckExpandedTest extends AbstractEpubCheckTest
     expectedErrors.add(MessageId.RSC_005);
     testValidateDocument("invalid/idx-collection-noindex");
   }
+
+  @Test
+  public void testDataNav_Basic()
+  {
+    testValidateDocument("valid/data-nav-basic");
+  }
+
+  @Test
+  public void testDataNav_MoreThanOne()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/data-nav-multiple");
+  }
+
+  @Test
+  public void testDataNav_NotXHTML()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_012);
+    testValidateDocument("invalid/data-nav-notxhtml");
+  }
+
+  @Test
+  public void testDataNav_InSpine()
+  {
+    Collections.addAll(expectedWarnings, MessageId.OPF_077);
+    testValidateDocument("invalid/data-nav-inspine");
+  }
+
+  @Test
+  public void testDataNav_MissingType()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/data-nav-missing-type");
+  }
+
+  @Test
+  public void testDataNav_RegionBased()
+  {
+    testValidateDocument("valid/data-nav-regionbased");
+  }
+
+  @Test
+  public void testDataNav_RegionBased_NotInDataNav()
+  {
+    Collections.addAll(expectedErrors, MessageId.HTM_052);
+    testValidateDocument("invalid/data-nav-regionbased-notindatanav");
+  }
+
+  @Test
+  public void testDataNav_RegionBased_NotFXL()
+  {
+    Collections.addAll(expectedErrors, MessageId.NAV_009);
+    testValidateDocument("invalid/data-nav-regionbased-notfxl");
+  }
+
+  @Test
+  public void testDataNav_RegionBased_Struct()
+  {
+    Collections.addAll(expectedWarnings, MessageId.RSC_017);
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005,
+        MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005);
+    testValidateDocument("invalid/data-nav-regionbased-struct");
+  }
+  
+  @Test
+  public void testDataNav_RegionBased_ComicsTypes()
+  {
+      testValidateDocument("valid/data-nav-regionbased-comics");
+  }
+
+  @Test
+  public void testDict_Single()
+  {
+    testValidateDocument("valid/dict-single");
+  }
+
+  @Test
+  public void testDict_Single_NoDictContent()
+  {
+    expectedErrors.add(MessageId.OPF_078);
+    testValidateDocument("invalid/dict-single-nodictcontent");
+  }
+
+  @Test
+  public void testDict_InvalidDictContent()
+  {
+    // Two errors: one in Nav Doc, one in regular XHTML Doc
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-invalidcontent");
+  }
+
+  @Test
+  public void testDict_SearchKeyMap_Invalid()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-skm-invalid");
+  }
+
+  @Test
+  public void testDict_SearchKeyMap_BadExtension()
+  {
+    Collections.addAll(expectedWarnings, MessageId.OPF_080);
+    testValidateDocument("invalid/dict-skm-badextension");
+  }
+
+  @Test
+  public void testDict_SearchKeyMap_LinkDoesntResolve()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_007);
+    testValidateDocument("invalid/dict-skm-linktonowhere");
+  }
+
+  @Test
+  public void testDict_SearchKeyMap_LinkToNonContentDoc()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_021);
+    testValidateDocument("invalid/dict-skm-linktocss");
+  }
+
+  @Test
+  public void testDict_NoDCType()
+  {
+    // error from schema, because profile is explictly asked
+    expectedErrors.add(MessageId.RSC_005);
+    // warning from content being detected as dictionary
+    expectedWarnings.add(MessageId.OPF_079);
+    testValidateDocument("invalid/dict-nodctype", EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_NoDCTypeButDictContent()
+  {
+    // Profile not set, but detected as dictionary from epub:type
+    expectedWarnings.add(MessageId.OPF_079);
+    testValidateDocument("invalid/dict-nodctype-2");
+  }
+
+  @Test
+  public void testDict_Multiple()
+  {
+    testValidateDocument("valid/dict-multiple");
+  }
+
+  @Test
+  public void testDict_Multiple_NoDictContent()
+  {
+    expectedErrors.add(MessageId.OPF_078);
+    testValidateDocument("invalid/dict-multiple-nodictcontent");
+  }
+
+  @Test
+  public void testDuplicateResources()
+  {
+    expectedErrors.add(MessageId.OPF_074);
+    testValidateDocument("invalid/duplicate-resource");
+  }
+
+  @Test
+  public void testEncryption_Unknown(){
+    expectedErrors.add(MessageId.RSC_004);
+    testValidateDocument("invalid/encryption-unknown");
+  }
+  
+  @Test
+  public void testOutOfSpineRef()
+  {
+    expectedErrors.add(MessageId.RSC_011);
+    testValidateDocument("invalid/href-outofspine");
+  }
+  
 
 }

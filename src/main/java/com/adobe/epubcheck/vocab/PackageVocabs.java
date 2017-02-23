@@ -18,12 +18,15 @@ public final class PackageVocabs
     BELONGS_TO_COLLECTION,
     COLLECTION_TYPE,
     DISPLAY_SEQ,
+    DICTIONARY_TYPE, // DICT
     FILE_AS,
     GROUP_POSITION,
     IDENTIFIER_TYPE,
     META_AUTH,
     ROLE,
+    SOURCE_LANGUAGE, // DICT
     SOURCE_OF,
+    TARGET_LANGUAGE, // DICT
     TITLE_TYPE
   }
 
@@ -33,11 +36,15 @@ public final class PackageVocabs
   public static enum ITEM_PROPERTIES
   {
     COVER_IMAGE("image/gif", "image/jpeg", "image/png", "image/svg+xml"),
+    DATA_NAV("application/xhtml+xml"),
+    DICTIONARY("application/vnd.epub.search-key-map+xml"),
+    GLOSSARY("application/vnd.epub.search-key-map+xml", "application/xhtml+xml"),
     INDEX("application/xhtml+xml"),
     MATHML("application/xhtml+xml", "image/svg+xml"),
     NAV("application/xhtml+xml"),
     REMOTE_RESOURCES("application/xhtml+xml", "application/smil+xml", "image/svg+xml", "text/css"),
     SCRIPTED("application/xhtml+xml", "image/svg+xml"),
+    SEARCH_KEY_MAP("application/vnd.epub.search-key-map+xml"),
     SVG("application/xhtml+xml"),
     SWITCH("application/xhtml+xml", "image/svg+xml");
 
@@ -70,12 +77,13 @@ public final class PackageVocabs
 
   public static enum LINKREL_PROPERTIES
   {
+    ACQUIRE,
     MARC21XML_RECORD,
     MODS_RECORD,
     ONIX_RECORD,
+    RECORD,
     XML_SIGNATURE,
-    XMP_RECORD,
-    RECORD
+    XMP_RECORD
   }
 
   private PackageVocabs()

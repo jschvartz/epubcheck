@@ -1,21 +1,29 @@
 package com.adobe.epubcheck.ctc;
 
+import java.util.HashSet;
+import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
 import com.adobe.epubcheck.api.EPUBLocation;
 import com.adobe.epubcheck.api.Report;
-import com.adobe.epubcheck.ctc.epubpackage.*;
+import com.adobe.epubcheck.ctc.epubpackage.EpubPackage;
+import com.adobe.epubcheck.ctc.epubpackage.ManifestItem;
+import com.adobe.epubcheck.ctc.epubpackage.PackageManifest;
+import com.adobe.epubcheck.ctc.epubpackage.PackageSpine;
+import com.adobe.epubcheck.ctc.epubpackage.SpineItem;
 import com.adobe.epubcheck.messages.MessageId;
 import com.adobe.epubcheck.opf.DocumentValidator;
 import com.adobe.epubcheck.util.EpubConstants;
 import com.adobe.epubcheck.util.FeatureEnum;
 import com.adobe.epubcheck.util.HandlerUtil;
 import com.adobe.epubcheck.util.PathUtil;
-
-import org.w3c.dom.*;
-
-import java.util.HashSet;
-import java.util.Vector;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class EpubNavCheck implements DocumentValidator
 {
@@ -60,7 +68,8 @@ public class EpubNavCheck implements DocumentValidator
           ZipEntry entry = epack.getZip().getEntry(fileToParse);
           if (entry == null)
           {
-            report.message(MessageId.RSC_001, EPUBLocation.create(epack.getFileName()), fileToParse);
+            // already reported in core checkers
+            // report.message(MessageId.RSC_001, EPUBLocation.create(epack.getFileName()), fileToParse);
             continue;
           }
 
@@ -164,12 +173,15 @@ public class EpubNavCheck implements DocumentValidator
       {
         SpineItem si = spine.getItem(i);
         ManifestItem mi = manifest.getItem(si.getIdref());
-        String path = mi.getHref();
-        path = PathUtil.resolveRelativeReference(epack.getPackageMainFile(), path,  null);
-
-        if (path != null && !path.equals(tocFileName) && !path.equals(navDocEntry) && !tocLinkSet.contains(path))
+        if (mi != null)
         {
-          report.message(MessageId.OPF_058, EPUBLocation.create(navDocEntry, path));
+            String path = mi.getHref();
+            path = PathUtil.resolveRelativeReference(epack.getPackageMainFile(), path,  null);
+
+            if (path != null && !path.equals(tocFileName) && !path.equals(navDocEntry) && !tocLinkSet.contains(path))
+            {
+              report.message(MessageId.OPF_058, EPUBLocation.create(navDocEntry, -1, -1, path));
+            }
         }
       }
     }

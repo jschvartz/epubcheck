@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "2.0",
+    "ePubVersion" : "2.0.1",
     "isScripted" : true,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : false,
@@ -109,10 +109,10 @@
     "id" : "ncx",
     "fileName" : "OPS/toc.ncx",
     "media_type" : "application/x-dtbncx+xml",
-    "compressedSize" : 305,
-    "uncompressedSize" : 571,
+    "compressedSize" : 306,
+    "uncompressedSize" : 589,
     "compressionMethod" : "Deflated",
-    "checkSum" : "c76f5a179935fd9f51862eebaa83028ec30aad3213ff467dc55eacc2ff41d44",
+    "checkSum" : "4823498fca909a458c3a8c307e6168ac9339a2ecc2bcd2184a4f4f3459927d6",
     "isSpineItem" : false,
     "spineIndex" : null,
     "isLinear" : false,
@@ -248,7 +248,7 @@
   }, {
     "ID" : "RSC-005",
     "severity" : "ERROR",
-    "message" : "Error while parsing file 'attribute \"onmousedown\" not allowed here; expected attribute \"class\", \"dir\", \"id\", \"lang\", \"style\", \"title\" or \"xml:lang\"'.",
+    "message" : "Error while parsing file: attribute \"onmousedown\" not allowed here; expected attribute \"class\", \"dir\", \"id\", \"lang\", \"style\", \"title\" or \"xml:lang\"",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/inline_script.xhtml",
@@ -260,7 +260,7 @@
   }, {
     "ID" : "SCP-004",
     "severity" : "ERROR",
-    "message" : "Content file contains script which is not supported in ePub v2.",
+    "message" : "Content file contains script which is not supported in EPUB v2.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/external_script.xhtml",

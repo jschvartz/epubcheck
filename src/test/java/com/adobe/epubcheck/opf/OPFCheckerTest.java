@@ -69,9 +69,9 @@ public class OPFCheckerTest
   public void testValidateDocument(String fileName, EPUBVersion version, EPUBProfile profile,
       boolean verbose)
   {
-    ValidationReport testReport = new ValidationReport(fileName, String.format(Messages
-        .get("single_file"), "opf", version.toString(), profile == null ? EPUBProfile.DEFAULT
-        : profile));
+    ValidationReport testReport = new ValidationReport(fileName,
+        String.format(Messages.get("single_file"), "opf", version.toString(),
+            profile == null ? EPUBProfile.DEFAULT : profile));
 
     GenericResourceProvider resourceProvider;
     if (fileName.startsWith("http://") || fileName.startsWith("https://"))
@@ -94,9 +94,10 @@ public class OPFCheckerTest
       resourceProvider = new FileResourceProvider(filePath);
     }
 
-    OPFChecker opfChecker = OPFCheckerFactory.getInstance().newInstance(
-        new ValidationContextBuilder().path("test_single_opf").resourceProvider(resourceProvider)
-            .report(testReport).version(version).profile(profile).build());
+    OPFChecker opfChecker = OPFCheckerFactory.getInstance()
+        .newInstance(new ValidationContextBuilder().path("test_single_opf")
+            .resourceProvider(resourceProvider).report(testReport).version(version).profile(profile)
+            .build());
 
     assert opfChecker != null;
     opfChecker.validate();
@@ -256,7 +257,7 @@ public class OPFCheckerTest
   @Test
   public void testValidateDocumentFallback001()
   {
-    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.OPF_040);
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
     testValidateDocument("invalid/fallback-001.opf", EPUBVersion.VERSION_3);
   }
 
@@ -272,6 +273,19 @@ public class OPFCheckerTest
   {
     Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005);
     testValidateDocument("invalid/id-unique.opf", EPUBVersion.VERSION_3);
+  }
+
+  @Test
+  public void testValidateDocumentIdUniqueWithSpaces()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005);
+    testValidateDocument("invalid/id-unique-spaces.opf", EPUBVersion.VERSION_3);
+  }
+
+  @Test
+  public void testId_WithSpaces()
+  {
+    testValidateDocument("valid/id-spaces.opf", EPUBVersion.VERSION_3);
   }
 
   @Test
@@ -462,11 +476,18 @@ public class OPFCheckerTest
     Collections.addAll(expectedErrors, MessageId.OPF_012);
     testValidateDocument("invalid/item-properties.opf", EPUBVersion.VERSION_3);
   }
+  
+  @Test
+  public void testValidateDocumentItemNoMediaType()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/item-nomediatype.opf", EPUBVersion.VERSION_3);
+  }
 
   @Test
   public void testValidateRedeclaredReservedPrefixes()
   {
-    Collections.addAll(expectedWarnings, MessageId.OPF_007, MessageId.OPF_007, MessageId.OPF_007b,
+    Collections.addAll(expectedWarnings, MessageId.OPF_007, MessageId.OPF_007b,
         MessageId.OPF_007b);
     // should generate 2 warnings (redeclaration of reserved prefixes and
     // redeclaration of default vocab)
@@ -809,6 +830,175 @@ public class OPFCheckerTest
   {
     Collections.addAll(expectedErrors, MessageId.OPF_071, MessageId.OPF_071);
     testValidateDocument("invalid/idx-collection-resource-noxhtml.opf", EPUBVersion.VERSION_3);
+  }
+
+  @Test
+  public void testDict_Single()
+  {
+    testValidateDocument("valid/dict-single.opf", EPUBVersion.VERSION_3, EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Single_NoSKM()
+  {
+    // No SKM Doc
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-single-noskm.opf", EPUBVersion.VERSION_3, EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Single_NoSKM_2()
+  {
+    // SKM doc missing a required property
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-single-noskm-2.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple()
+  {
+    testValidateDocument("valid/dict-multiple.opf", EPUBVersion.VERSION_3, EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple_NoSKM()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_083);
+    testValidateDocument("invalid/dict-multiple-noskm.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple_CollectionWithMultipleSKMs()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_082);
+    testValidateDocument("invalid/dict-multiple-morethanoneskm.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple_CollectionSharingSKM()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-multiple-sharedskm.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple_CollectionContainingMissingResource()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_081);
+    testValidateDocument("invalid/dict-multiple-missingresource.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+  
+  @Test
+  public void testDict_Multiple_CollectionContainingNonXHTML()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_084);
+    testValidateDocument("invalid/dict-multiple-nonxhtml.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Multiple_CollectionWithSubCollection()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-multiple-subcollection.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_NoDCType()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-nodctype.opf", EPUBVersion.VERSION_3, EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_SKM_BadMediaType()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_012);
+    testValidateDocument("invalid/dict-skm-badmediatype.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_InCollection()
+  {
+    testValidateDocument("valid/dict-multiple-dedicatedlang.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_InvalidInCollection()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-invalidcollection.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_InvalidInTopLevel()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-invalidtoplevel.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_MissingInCollection()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-missingcollection.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_MissingTopLevel()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-missingtoplevel.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_UndeclaredInCollection()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-undeclaredcollection.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testDict_Lang_UndeclaredTopLevel()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-lang-undeclaredtoplevel.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+  
+  @Test
+  public void testDict_Type()
+  {
+    testValidateDocument("valid/dict-single-typed.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+  
+  @Test
+  public void testDict_Type_Unknown()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005);
+    testValidateDocument("invalid/dict-type-unknown.opf", EPUBVersion.VERSION_3,
+        EPUBProfile.DICT);
+  }
+
+  @Test
+  public void testManifest_DuplicateResource()
+  {
+    Collections.addAll(expectedErrors, MessageId.OPF_074);
+    testValidateDocument("invalid/manifest-duplicate-resource.opf", EPUBVersion.VERSION_3);
   }
 
 }

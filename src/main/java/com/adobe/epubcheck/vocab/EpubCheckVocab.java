@@ -13,13 +13,17 @@ public final class EpubCheckVocab
 {
   public static final String PREFIX = "epubcheck";
   public static final String URI = "http://www.idpf.org/epubcheck/#";
-  public static final EnumVocab<PROPERTIES> VOCAB = new EnumVocab<PROPERTIES>(PROPERTIES.class,
-      URI, PREFIX);
-  public static final Map<String, Vocab> VOCAB_MAP = ImmutableMap.<String, Vocab> of(
-      EpubCheckVocab.PREFIX, EpubCheckVocab.VOCAB);
+  public static final EnumVocab<PROPERTIES> VOCAB = new EnumVocab<PROPERTIES>(PROPERTIES.class, URI,
+      PREFIX);
+  public static final Map<String, Vocab> VOCAB_MAP = ImmutableMap
+      .<String, Vocab> of(EpubCheckVocab.PREFIX, EpubCheckVocab.VOCAB);
 
   public static enum PROPERTIES
   {
+    /**
+     * Property of OPF items representing Fixed Layout Content Documents
+     */
+    FIXED_LAYOUT,
     /**
      * Property of OPF items referenced in 'index' collections
      */
@@ -31,7 +35,12 @@ public final class EpubCheckVocab
     /**
      * Property of non-linear OPF items
      */
-    NON_LINEAR;
+    NON_LINEAR,
+    /**
+     * Property used to identify the Rendition Mapping Document in the OCF
+     * checker
+     */
+    RENDITION_MAPPING;
 
   }
 

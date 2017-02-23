@@ -125,6 +125,7 @@ public enum MessageId implements Comparable<MessageId>
   HTM_049("HTM-049"),
   HTM_050("HTM-050"),
   HTM_051("HTM-051"),
+  HTM_052("HTM-052"),
 
   // Messages associated with media (images, audio and video)
   MED_001("MED-001"),
@@ -143,11 +144,15 @@ public enum MessageId implements Comparable<MessageId>
   NAV_006("NAV-006"),
   NAV_007("NAV-007"),
   NAV_008("NAV-008"),
+  NAV_009("NAV-009"),
 
   // Epub2 based table of content messages
+  NCX_001("NCX-001"),
   NCX_002("NCX-002"),
   NCX_003("NCX-003"),
+  NCX_004("NCX-004"),
   NCX_005("NCX-005"),
+  NCX_006("NCX-006"),
 
   // Messages related to the markup in the OPF file
   OPF_001("OPF-001"),
@@ -226,6 +231,19 @@ public enum MessageId implements Comparable<MessageId>
   OPF_069("OPF-069"),
   OPF_070("OPF-070"),
   OPF_071("OPF-071"),
+  OPF_072("OPF-072"),
+  OPF_073("OPF-073"),
+  OPF_074("OPF-074"),
+  OPF_075("OPF-075"),
+  OPF_076("OPF-076"),
+  OPF_077("OPF-077"),
+  OPF_078("OPF-078"),
+  OPF_079("OPF-079"),
+  OPF_080("OPF-080"),
+  OPF_081("OPF-081"),
+  OPF_082("OPF-082"),
+  OPF_083("OPF-083"),
+  OPF_084("OPF-084"),
 
   // Messages relating to the entire package
   PKG_001("PKG-001"),
@@ -258,6 +276,7 @@ public enum MessageId implements Comparable<MessageId>
   RSC_005("RSC-005"),
   RSC_006("RSC-006"),
   RSC_007("RSC-007"),
+  RSC_007w("RSC-007w"),
   RSC_008("RSC-008"),
   RSC_009("RSC-009"),
   RSC_010("RSC-010"),
@@ -270,6 +289,10 @@ public enum MessageId implements Comparable<MessageId>
   RSC_017("RSC-017"),
   RSC_018("RSC-018"),
   RSC_019("RSC-019"),
+  RSC_020("RSC-020"),
+  RSC_021("RSC-021"),
+  RSC_022("RSC-022"),
+  RSC_023("RSC-023"),
 
   // Messages relating to scripting
   SCP_001("SCP-001"),

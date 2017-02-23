@@ -3,6 +3,7 @@ package com.adobe.epubcheck.ops;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -20,9 +21,13 @@ import com.adobe.epubcheck.util.FeatureEnum;
 import com.adobe.epubcheck.util.PathUtil;
 import com.adobe.epubcheck.vocab.AggregateVocab;
 import com.adobe.epubcheck.vocab.AltStylesheetVocab;
+import com.adobe.epubcheck.vocab.ComicsVocab;
+import com.adobe.epubcheck.vocab.DataNavVocab;
+import com.adobe.epubcheck.vocab.DictVocab;
 import com.adobe.epubcheck.vocab.EnumVocab;
 import com.adobe.epubcheck.vocab.EpubCheckVocab;
 import com.adobe.epubcheck.vocab.IndexVocab;
+import com.adobe.epubcheck.vocab.PackageVocabs;
 import com.adobe.epubcheck.vocab.PackageVocabs.ITEM_PROPERTIES;
 import com.adobe.epubcheck.vocab.Property;
 import com.adobe.epubcheck.vocab.StagingEdupubVocab;
@@ -34,6 +39,7 @@ import com.adobe.epubcheck.xml.XMLAttribute;
 import com.adobe.epubcheck.xml.XMLElement;
 import com.adobe.epubcheck.xml.XMLParser;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -45,7 +51,8 @@ public class OPSHandler30 extends OPSHandler
   private static final Pattern DATA_URI_PATTERN = Pattern.compile("^data:([^;]*)[^,]*,.*");
 
   private static Map<String, Vocab> RESERVED_VOCABS = ImmutableMap.<String, Vocab> of("",
-      AggregateVocab.of(StructureVocab.VOCAB, StagingEdupubVocab.VOCAB, IndexVocab.VOCAB));
+      AggregateVocab.of(StructureVocab.VOCAB, StagingEdupubVocab.VOCAB, DataNavVocab.VOCAB,
+          DictVocab.VOCAB, IndexVocab.VOCAB, ComicsVocab.VOCAB));
   private static Map<String, Vocab> ALTCSS_VOCABS = ImmutableMap.<String, Vocab> of("",
       AltStylesheetVocab.VOCAB);
   private static Map<String, Vocab> KNOWN_VOCAB_URIS = ImmutableMap.of();
@@ -69,7 +76,9 @@ public class OPSHandler30 extends OPSHandler
   protected boolean inMathML = false;
   protected boolean inSvg = false;
   protected boolean inBody = false;
+  protected boolean inRegionBasedNav = false;
   protected boolean hasAltorAnnotation = false;
+  protected boolean hasTitle = false;
 
   static protected final String[] scriptEventsStrings = { "onafterprint", "onbeforeprint",
       "onbeforeunload", "onerror", "onhaschange", "onload", "onmessage", "onoffline", "onpagehide",
@@ -118,11 +127,11 @@ public class OPSHandler30 extends OPSHandler
   {
     super(context, parser);
     checkedUnsupportedXMLVersion = false;
-    isLinear = !context.properties.contains(EpubCheckVocab.VOCAB
-        .get(EpubCheckVocab.PROPERTIES.NON_LINEAR));
+    isLinear = !context.properties
+        .contains(EpubCheckVocab.VOCAB.get(EpubCheckVocab.PROPERTIES.NON_LINEAR));
   }
 
-  protected void checkType(String type)
+  protected void checkType(XMLElement e, String type)
   {
     if (type == null)
     {
@@ -131,6 +140,26 @@ public class OPSHandler30 extends OPSHandler
     Set<Property> propList = VocabUtil.parsePropertyList(type, vocabs, report,
         EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber()));
     checkTypes(Property.filter(propList, StructureVocab.EPUB_TYPES.class));
+
+    // Check the 'region-based' property (Data Navigation Documents)
+    if (propList.contains(DataNavVocab.VOCAB.get(DataNavVocab.EPUB_TYPES.REGION_BASED)))
+
+    {
+      if (!"nav".equals(e.getName()) || !context.properties
+          .contains(PackageVocabs.ITEM_VOCAB.get(PackageVocabs.ITEM_PROPERTIES.DATA_NAV)))
+      {
+        report.message(MessageId.HTM_052, parser.getLocation());
+      }
+      else
+      {
+        inRegionBasedNav = true;
+      }
+    }
+    // Store whether the doc containt DICT content
+    if (propList.contains(DictVocab.VOCAB.get(DictVocab.EPUB_TYPES.DICTIONARY)))
+    {
+      context.featureReport.report(FeatureEnum.DICTIONARY, parser.getLocation(), null);
+    }
   }
 
   protected void checkTypes(Set<EPUB_TYPES> types)
@@ -253,12 +282,16 @@ public class OPSHandler30 extends OPSHandler
     {
       hasAltorAnnotation = true;
     }
+    else if ("http://www.w3.org/2000/svg".equals(e.getNamespace()) && name.equals("title"))
+    {
+      hasTitle = true;
+    }
 
     processInlineScripts(e);
 
     processSrc(("source".equals(name)) ? e.getParent().getName() : name, e.getAttribute("src"));
 
-    checkType(e.getAttributeNS(EpubConstants.EpubTypeNamespaceUri, "type"));
+    checkType(e, e.getAttributeNS(EpubConstants.EpubTypeNamespaceUri, "type"));
 
     checkSSMLPh(e.getAttributeNS("http://www.w3.org/2001/10/synthesis", "ph"));
   }
@@ -271,7 +304,7 @@ public class OPSHandler30 extends OPSHandler
     for (int i = 0; i < e.getAttributeCount(); ++i)
     {
       XMLAttribute attr = e.getAttribute(i);
-      String name = attr.getName().toLowerCase();
+      String name = attr.getName().toLowerCase(Locale.ROOT);
       if (scriptEvents.contains(name) || mouseEvents.contains(name))
       {
         requiredProperties.add(ITEM_PROPERTIES.SCRIPTED);
@@ -282,7 +315,6 @@ public class OPSHandler30 extends OPSHandler
 
   protected void processLink(XMLElement e)
   {
-
     String classAttribute = e.getAttribute("class");
     if (classAttribute == null)
     {
@@ -318,14 +350,10 @@ public class OPSHandler30 extends OPSHandler
     {
       anchorNeedsText = false;
     }
-    if (inSvg)
+    if (inSvg || context.mimeType.equals("image/svg+xml"))
     {
-      String titleAttribute = e.getAttributeNS(EpubConstants.XLinkNamespaceUri, "title");
-      if (titleAttribute == null)
-      {
-        report.message(MessageId.ACC_011, EPUBLocation.create(path, parser.getLineNumber(),
-            parser.getColumnNumber(), e.getName()));
-      }
+      hasTitle = Strings
+          .emptyToNull(e.getAttributeNS(EpubConstants.XLinkNamespaceUri, "title")) != null;
     }
   }
 
@@ -358,8 +386,8 @@ public class OPSHandler30 extends OPSHandler
     String posterMimeType = null;
     if (xrefChecker.isPresent() && posterSrc != null)
     {
-      posterMimeType = xrefChecker.get().getMimeType(
-          PathUtil.resolveRelativeReference(path, posterSrc, base));
+      posterMimeType = xrefChecker.get().getMimeType(PathUtil.resolveRelativeReference(path,
+          posterSrc, base == null ? null : base.toString()));
     }
 
     if (posterMimeType != null && !OPFChecker.isBlessedImageType(posterMimeType))
@@ -374,6 +402,16 @@ public class OPSHandler30 extends OPSHandler
       processSrc(e.getName(), posterSrc);
     }
 
+  }
+
+  protected void processHyperlink(String href)
+  {
+    super.processHyperlink(href);
+    if (inRegionBasedNav && xrefChecker.isPresent())
+    {
+      xrefChecker.get().registerReference(path, parser.getLineNumber(), parser.getColumnNumber(),
+          href, XRefChecker.Type.REGION_BASED_NAV);
+    }
   }
 
   protected void processSrc(String name, String src)
@@ -408,24 +446,27 @@ public class OPSHandler30 extends OPSHandler
       }
       else
       {
-        src = PathUtil.resolveRelativeReference(path, src, base);
+        src = PathUtil.resolveRelativeReference(path, src, base == null ? null : base.toString());
       }
 
-      int refType;
+      XRefChecker.Type refType;
       if ("audio".equals(name))
       {
-        refType = XRefChecker.RT_AUDIO;
+        refType = XRefChecker.Type.AUDIO;
       }
       else if ("video".equals(name))
       {
-        refType = XRefChecker.RT_VIDEO;
+        refType = XRefChecker.Type.VIDEO;
       }
       else
       {
-        refType = XRefChecker.RT_GENERIC;
+        refType = XRefChecker.Type.GENERIC;
       }
-      xrefChecker.get().registerReference(path, parser.getLineNumber(), parser.getColumnNumber(),
-          src, refType);
+      if (!"img".equals(name)) // img already registered in super class
+      {
+        xrefChecker.get().registerReference(path, parser.getLineNumber(), parser.getColumnNumber(),
+            src, refType);
+      }
 
       srcMimeType = xrefChecker.get().getMimeType(src);
     }
@@ -458,7 +499,7 @@ public class OPSHandler30 extends OPSHandler
     if (data != null)
     {
       processSrc(e.getName(), data);
-      data = PathUtil.resolveRelativeReference(path, data, base);
+      data = PathUtil.resolveRelativeReference(path, data, base == null ? null : base.toString());
     }
 
     if (type != null && data != null && xrefChecker.isPresent()
@@ -619,6 +660,11 @@ public class OPSHandler30 extends OPSHandler
             EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber(), "a"));
         anchorNeedsText = false;
       }
+      if ((inSvg || context.mimeType.equals("image/svg+xml")) && !hasTitle)
+      {
+        report.message(MessageId.ACC_011, EPUBLocation.create(path, parser.getLineNumber(),
+            parser.getColumnNumber(), e.getName()));
+      }
     }
     else if (name.equals("math"))
     {
@@ -628,6 +674,10 @@ public class OPSHandler30 extends OPSHandler
         report.message(MessageId.ACC_009,
             EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber(), "math"));
       }
+    }
+    else if (name.equals("nav") && inRegionBasedNav)
+    {
+      inRegionBasedNav = false;
     }
   }
 
@@ -665,6 +715,7 @@ public class OPSHandler30 extends OPSHandler
     Set<ITEM_PROPERTIES> uncheckedProperties = Sets.difference(itemProps, requiredProperties)
         .copyInto(EnumSet.noneOf(ITEM_PROPERTIES.class));
     uncheckedProperties.remove(ITEM_PROPERTIES.NAV);
+    uncheckedProperties.remove(ITEM_PROPERTIES.DATA_NAV);
     uncheckedProperties.remove(ITEM_PROPERTIES.COVER_IMAGE);
     uncheckedProperties.removeAll(allowedProperties);
     if (uncheckedProperties.contains(ITEM_PROPERTIES.REMOTE_RESOURCES))
@@ -676,12 +727,8 @@ public class OPSHandler30 extends OPSHandler
 
     if (!uncheckedProperties.isEmpty())
     {
-      report
-          .message(
-              MessageId.OPF_015,
-              EPUBLocation.create(path),
-              Joiner.on(", ").join(
-                  Collections2.transform(uncheckedProperties, EnumVocab.ENUM_TO_NAME)));
+      report.message(MessageId.OPF_015, EPUBLocation.create(path), Joiner.on(", ")
+          .join(Collections2.transform(uncheckedProperties, EnumVocab.ENUM_TO_NAME)));
     }
   }
 }

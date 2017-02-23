@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "3.0",
+    "ePubVersion" : "3.0.1",
     "isScripted" : false,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : true,
@@ -211,7 +211,7 @@
   }, {
     "ID" : "RSC-001",
     "severity" : "ERROR",
-    "message" : "File 'OPS/toc.xhtml' is not found.",
+    "message" : "File 'OPS/toc.xhtml' could not be found.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "missing_toc_file.epub",

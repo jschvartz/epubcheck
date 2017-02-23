@@ -55,23 +55,28 @@ import com.google.common.base.Predicates;
 public class OPFChecker implements DocumentValidator, ContentChecker
 {
 
-  private final static ValidatorMap validatorMap = ValidatorMap
-      .builder()
+  private final static ValidatorMap validatorMap = ValidatorMap.builder()
       .put(version(EPUBVersion.VERSION_2), XMLValidators.OPF_20_RNG)
       .put(version(EPUBVersion.VERSION_2), XMLValidators.OPF_20_SCH)
       .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_RNC)
       .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_SCH)
       .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_DO_SCH)
-      .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_MANIFEST_SCH)
+      .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_DICT_SCH)
       .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_IDX_SCH)
+      .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_MANIFEST_SCH)
+      .put(version(EPUBVersion.VERSION_3), XMLValidators.OPF_30_COLLECTION_PREVIEW_SCH)
+      .put(Predicates.or(profile(EPUBProfile.DICT), hasPubType(OPFData.DC_TYPE_DICT)),
+          XMLValidators.OPF_DICT_SCH)
       .put(Predicates.or(profile(EPUBProfile.EDUPUB), hasPubType(OPFData.DC_TYPE_EDUPUB)),
-          XMLValidators.OPF_EDUPUB_SCH).build();
+          XMLValidators.OPF_EDUPUB_SCH)
+      .put(Predicates.or(profile(EPUBProfile.PREVIEW), hasPubType(OPFData.DC_TYPE_PREVIEW)),
+          XMLValidators.OPF_PREVIEW_SCH)
+      .build();
 
   protected final ValidationContext context;
   protected final Report report;
   protected final String path;
   protected final EPUBVersion version;
-  protected String navPath;
   protected OPFHandler opfHandler = null;
   protected XMLParser opfParser = null;
   protected final Hashtable<String, ContentCheckerFactory> contentCheckerFactoryMap = new Hashtable<String, ContentCheckerFactory>();
@@ -80,14 +85,14 @@ public class OPFChecker implements DocumentValidator, ContentChecker
   {
     Hashtable<String, ContentCheckerFactory> map = new Hashtable<String, ContentCheckerFactory>();
     map.put("application/xhtml+xml", OPSCheckerFactory.getInstance());
-    map.put("text/html", OPSCheckerFactory.getInstance());
-    map.put("text/x-oeb1-document", OPSCheckerFactory.getInstance());
+    map.put("application/x-dtbook+xml", DTBookCheckerFactory.getInstance());
     map.put("image/jpeg", BitmapCheckerFactory.getInstance());
     map.put("image/gif", BitmapCheckerFactory.getInstance());
     map.put("image/png", BitmapCheckerFactory.getInstance());
     map.put("image/svg+xml", OPSCheckerFactory.getInstance());
-    map.put("application/x-dtbook+xml", DTBookCheckerFactory.getInstance());
     map.put("text/css", CSSCheckerFactory.getInstance());
+    map.put("text/html", OPSCheckerFactory.getInstance());
+    map.put("text/x-oeb1-document", OPSCheckerFactory.getInstance());
 
     contentCheckerFactoryMap.putAll(map);
   }
@@ -130,27 +135,14 @@ public class OPFChecker implements DocumentValidator, ContentChecker
     {
       report.message(MessageId.OPF_030, EPUBLocation.create(path), opfHandler.getIdentId());
     }
-    else
-    {
-      ocf.setUniqueIdentifier(opfHandler.getUid());
-    }
 
     List<OPFItem> items = opfHandler.getItems();
     report.info(null, FeatureEnum.ITEMS_COUNT, Integer.toString(items.size()));
     for (OPFItem item : items)
     {
-      try
-      {
-        xrefChecker.registerResource(item.getPath(), item.getMimeType(), item.isInSpine(),
-            new FallbackChecker().checkItemFallbacks(item, opfHandler, true),
-            new FallbackChecker().checkImageFallbacks(item, opfHandler));
-      } catch (IllegalArgumentException e)
-      {
-        report
-            .message(MessageId.RSC_005,
-                EPUBLocation.create(path, item.getLineNumber(), item.getColumnNumber()),
-                e.getMessage());
-      }
+      xrefChecker.registerResource(item,
+          new FallbackChecker().checkItemFallbacks(item, opfHandler, true),
+          new FallbackChecker().checkImageFallbacks(item, opfHandler));
 
       report.info(item.getPath(), FeatureEnum.DECLARED_MIMETYPE, item.getMimeType());
     }
@@ -238,7 +230,16 @@ public class OPFChecker implements DocumentValidator, ContentChecker
       {
         OCFFilenameChecker.checkCompatiblyEscaped(item.getPath(), report, version);
       }
-      checkItem(item, opfHandler);
+      if (!item.equals(opfHandler.getItemByPath(item.getPath()).orNull()))
+      {
+        report.message(MessageId.OPF_074,
+            EPUBLocation.create(path, item.getLineNumber(), item.getColumnNumber()),
+            item.getPath());
+      }
+      else
+      {
+        checkItem(item, opfHandler);
+      }
     }
 
     if (!opfHandler.getSpineItems().isEmpty())
@@ -300,12 +301,12 @@ public class OPFChecker implements DocumentValidator, ContentChecker
     return type.equals("text/x-oeb1-document") || type.equals("text/html");
   }
 
-  protected static boolean isBlessedStyleType(String type)
+  public static boolean isBlessedStyleType(String type)
   {
     return type.equals("text/css");
   }
 
-  protected static boolean isDeprecatedBlessedStyleType(String type)
+  public static boolean isDeprecatedBlessedStyleType(String type)
   {
     return type.equals("text/x-oeb1-css");
   }
@@ -318,9 +319,8 @@ public class OPFChecker implements DocumentValidator, ContentChecker
 
   public static boolean isBlessedFontMimetype20(String mime)
   {
-    return mime != null
-        && (mime.startsWith("font/") || mime.startsWith("application/font")
-            || mime.startsWith("application/x-font") || "application/vnd.ms-opentype".equals(mime));
+    return mime != null && (mime.startsWith("font/") || mime.startsWith("application/font")
+        || mime.startsWith("application/x-font") || "application/vnd.ms-opentype".equals(mime));
   }
 
   protected void checkItem(OPFItem item, OPFHandler opfHandler)
@@ -403,7 +403,6 @@ public class OPFChecker implements DocumentValidator, ContentChecker
     }
     else if (item.isNav())
     {
-      navPath = item.getPath();
       checkerFactory = NavCheckerFactory.getInstance();
     }
     else

@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "2.0",
+    "ePubVersion" : "2.0.1",
     "isScripted" : false,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : false,
@@ -214,7 +214,7 @@
   }, {
     "ID" : "NCX-003",
     "severity" : "USAGE",
-    "message" : "An .NCX file is required for TOC navigation on ePub v2 readers.",
+    "message" : "An .NCX file is required for TOC navigation on EPUB v2 readers.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "oebps12.opf",
@@ -286,7 +286,7 @@
   }, {
     "ID" : "RSC-005",
     "severity" : "ERROR",
-    "message" : "Error while parsing file 'attribute \"version\" not allowed here; expected attribute \"id\"'.",
+    "message" : "Error while parsing file: attribute \"version\" not allowed here; expected attribute \"id\"",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "oebps12.opf",

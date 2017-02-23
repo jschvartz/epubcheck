@@ -7,7 +7,7 @@
     "checkDate" : "03-25-2015 10:06:39",
     "elapsedTime" : 64,
     "nFatal" : 0,
-    "nError" : 8,
+    "nError" : 7,
     "nWarning" : 2,
     "nUsage" : 10
   },
@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "3.0",
+    "ePubVersion" : "3.0.1",
     "isScripted" : false,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : true,
@@ -346,7 +346,7 @@
   }, {
     "ID" : "CSS-025",
     "severity" : "USAGE",
-    "message" : "CSS class Selector is not found.",
+    "message" : "CSS class Selector could not be found.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/mathMl.xhtml",
@@ -609,21 +609,9 @@
     } ],
     "suggestion" : "Every spine item in the manifest should be referenced by at least one NCX entry."
   }, {
-    "ID" : "RSC-001",
-    "severity" : "ERROR",
-    "message" : "File '' is not found.",
-    "additionalLocations" : 0,
-    "locations" : [ {
-      "path" : "OPS/links.xhtml",
-      "line" : 25,
-      "column" : 71,
-      "context" : "img"
-    } ],
-    "suggestion" : null
-  }, {
     "ID" : "RSC-007",
     "severity" : "ERROR",
-    "message" : "Referenced resource is not found in the ePub.",
+    "message" : "Referenced resource 'OPS/' could not be found in the EPUB.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/links.xhtml",
@@ -650,16 +638,6 @@
     "message" : "Fragment identifier is not defined.",
     "additionalLocations" : 0,
     "locations" : [ {
-      "path" : "OPS/links.xhtml",
-      "line" : 5,
-      "column" : 67,
-      "context" : "OPS/style.css#frag"
-    }, {
-      "path" : "OPS/links.xhtml",
-      "line" : 24,
-      "column" : 108,
-      "context" : "OPS/images/sample.jpg#hello"
-    }, {
       "path" : "OPS/svg_links.xhtml",
       "line" : 22,
       "column" : 55,
@@ -710,7 +688,7 @@
   }, {
     "ID" : "RSC-018",
     "severity" : "WARNING",
-    "message" : "Altimg file 'images/missing.png' is not found.",
+    "message" : "Alternative image file 'images/missing.png' could not be found.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/mathMl.xhtml",

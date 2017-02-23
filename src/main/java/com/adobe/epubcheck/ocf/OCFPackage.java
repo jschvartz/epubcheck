@@ -80,16 +80,6 @@ public abstract class OCFPackage implements GenericResourceProvider
     enc.put(name, encryptionFilter);
   }
 
-  public void setUniqueIdentifier(String idval)
-  {
-    uniqueIdentifier = idval;
-  }
-
-  public String getUniqueIdentifier()
-  {
-    return uniqueIdentifier;
-  }
-
   /**
    * @param name
    *          the name of a relative file that is possibly in the container
@@ -117,14 +107,14 @@ public abstract class OCFPackage implements GenericResourceProvider
     throws IOException;
 
   /**
-   * @return a set of relative file names of files in this container
+   * @return a set of relative file names of files in this container (cleaned from duplicates)
    * @throws IOException
    */
   public abstract Set<String> getFileEntries()
     throws IOException;
 
   /**
-   * @return a set of relative directory entries in this container
+   * @return a set of relative directory entries in this container (cleaned from duplicates)
    * @throws IOException
    */
   public abstract Set<String> getDirectoryEntries()

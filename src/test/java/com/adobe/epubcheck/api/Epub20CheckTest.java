@@ -85,7 +85,6 @@ public class Epub20CheckTest extends AbstractEpubCheckTest
   @Test
   public void testValidateEPUBPFileDeclaredInContainerNotOpf20()
   {
-    Collections.addAll(expectedErrors, MessageId.RSC_005);
     testValidateDocument("ContainerNotOPF20.epub");
   }
 
@@ -216,6 +215,14 @@ public class Epub20CheckTest extends AbstractEpubCheckTest
   {
     testValidateDocument("valid/issue194.good.epub");
   }
+  
+  @Test
+  public void testValidateEPUBinvalidIssue176()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_001, MessageId.RSC_001, MessageId.RSC_001,
+        MessageId.RSC_001);
+    testValidateDocument("invalid/issue176.epub");
+  }
 
   @Test
   public void testValidateEPUB30Issue170()
@@ -246,11 +253,16 @@ public class Epub20CheckTest extends AbstractEpubCheckTest
     Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005, MessageId.RSC_005);
     testValidateDocument("invalid/issue313.epub");
 	}
+	
+	@Test
+	public void testNcxIdEmptyLabel() {
+	  testValidateDocument("valid/issue301-ncx-empty-label.epub");
+	}
 
 	@Test
 	public void testLinkedStylesheetCaseInsensitiveIssue316() {
 		// rel="stylesheet" must be checked case-insensitive
-    testValidateDocument("invalid/issue316.epub");
+	  Collections.addAll(expectedErrors, MessageId.RSC_007);
     testValidateDocument("invalid/issue316.epub");
 	}
 }

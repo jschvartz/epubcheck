@@ -12,7 +12,7 @@
 
     <pattern id="encoding.decl.state">
         <rule context="h:meta[lower-case(@http-equiv)='content-type']">
-            <assert test="matches(normalize-space(@content),'text/html;\s*charset=utf-8',i)">The
+            <assert test="matches(normalize-space(@content),'text/html;\s*charset=utf-8','i')">The
                 meta element in encoding declaration state (http-equiv='content-type') must have the
                 value 'text/html; charset=utf-8'</assert>
             <assert test="empty(../h:meta[@charset])">A document must not contain both a meta element
@@ -29,6 +29,12 @@
     <pattern id="ancestor-imgismap-ahref" is-a="required-ancestor">
         <param name="descendant" value="h:img[@ismap]"/>
         <param name="ancestor" value="h:a[@href]"/>
+    </pattern>
+    
+    <pattern id="deprecated-aria-describedat">
+        <rule context="h:*[@aria-describedat]">
+            <report test="true()">WARNING: the 'aria-describedat' attribute is deprecated.</report>
+        </rule>
     </pattern>
 
     <pattern id="descendant-a-interactive" is-a="no-interactive-content-descendants">
@@ -231,7 +237,7 @@
         <rule context="h:*[@headers]">
             <let name="table" value="ancestor::h:table"/>
             <assert
-                test="every $idref in tokenize(@headers, '\s+') satisfies (some $elem in $table//h:th satisfies ($elem/@id eq $idref))"
+                test="every $idref in tokenize(normalize-space(@headers), '\s+') satisfies (some $elem in $table//h:th satisfies ($elem/@id eq $idref))"
                 >The headers attribute must refer to th elements in the same table.</assert>
         </rule>
     </pattern>
@@ -374,7 +380,7 @@
     <pattern abstract="true" id="idrefs-any">
         <rule context="$element[@$idrefs-attr-name]">
             <assert
-                test="every $idref in tokenize(@$idrefs-attr-name,'\s+') satisfies (some $elem in $id-set satisfies ($elem/@id eq $idref))"
+                test="every $idref in tokenize(normalize-space(@$idrefs-attr-name),'\s+') satisfies (some $elem in $id-set satisfies ($elem/@id eq $idref))"
                 >The <name path="@$idrefs-attr-name"/> attribute must refer to elements in the same
                 document (target ID missing)</assert>
         </rule>

@@ -1,11 +1,13 @@
 package com.adobe.epubcheck.vocab;
 
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Map;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Maps.EntryTransformer;
@@ -34,11 +36,12 @@ public final class EnumVocab<P extends Enum<P>> implements Vocab
     @Override
     public String apply(Enum<?> enumee)
     {
-      return enumee.name().toLowerCase().replace('_', '-');
+      return enumee.name().toLowerCase(Locale.ROOT).replace('_', '-');
     }
   };
 
   private final Map<String, Property> index;
+  private final String uri;
 
   /**
    * Creates a new vocabulary backed by the given {@link Enum} class and with
@@ -70,24 +73,31 @@ public final class EnumVocab<P extends Enum<P>> implements Vocab
    */
   public EnumVocab(final Class<P> clazz, final String base, final String prefix)
   {
-    this.index = ImmutableMap.copyOf(Maps.transformEntries(
-        Maps.uniqueIndex(EnumSet.allOf(clazz), ENUM_TO_NAME),
-        new EntryTransformer<String, P, Property>()
-        {
+    this.uri = Strings.nullToEmpty(base);
+    this.index = ImmutableMap
+        .copyOf(Maps.transformEntries(Maps.uniqueIndex(EnumSet.allOf(clazz), ENUM_TO_NAME),
+            new EntryTransformer<String, P, Property>()
+            {
 
-          @Override
-          public Property transformEntry(String name, P enumee)
-          {
-            return Property.newFrom(name, base, prefix, enumee);
-          }
+              @Override
+              public Property transformEntry(String name, P enumee)
+              {
+                return Property.newFrom(name, base, prefix, enumee);
+              }
 
-        }));
+            }));
   }
 
   @Override
   public Optional<Property> lookup(String name)
   {
     return Optional.fromNullable(index.get(name));
+  }
+
+  @Override
+  public String getURI()
+  {
+    return uri;
   }
 
   /**

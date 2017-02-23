@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.adobe.epubcheck.api.EPUBProfile;
@@ -439,8 +440,15 @@ public class EpubChecker
     {
       if (expanded)
       {
-        Archive epub;
+        // check existance of path (fix #525)
+        File f = new File(path);
+        if (!f.exists())
+        {
+          System.err.println(String.format(Messages.get("directory_not_found"), path));
+          return 1;
+        }
 
+        Archive epub;
         try
         {
           epub = new Archive(path, true);
@@ -576,7 +584,7 @@ public class EpubChecker
           String profileStr = args[++i];
           try
           {
-            profile = EPUBProfile.valueOf(profileStr.toUpperCase());
+            profile = EPUBProfile.valueOf(profileStr.toUpperCase(Locale.ROOT));
           } catch (IllegalArgumentException e)
           {
             System.err.println(Messages.get("mode_version_ignored", profileStr));
@@ -712,7 +720,7 @@ public class EpubChecker
         if (i + 1 < args.length)
         {
           String fileName = args[i + 1];
-          if ("none".compareTo(fileName.toLowerCase()) == 0)
+          if ("none".compareTo(fileName.toLowerCase(Locale.ROOT)) == 0)
           {
             customMessageFile = null;
             useCustomMessageFile = false;

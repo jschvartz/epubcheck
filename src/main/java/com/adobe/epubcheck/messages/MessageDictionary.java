@@ -100,10 +100,10 @@ public class MessageDictionary
       map.put(MessageId.CSS_004, Severity.ERROR);
       map.put(MessageId.CSS_005, Severity.ERROR);
       map.put(MessageId.CSS_006, Severity.WARNING);
-      map.put(MessageId.CSS_007, Severity.WARNING);
+      map.put(MessageId.CSS_007, Severity.INFO);
       map.put(MessageId.CSS_008, Severity.ERROR);
       map.put(MessageId.CSS_009, Severity.USAGE);
-      map.put(MessageId.CSS_010, Severity.WARNING);
+      map.put(MessageId.CSS_010, Severity.ERROR);
       map.put(MessageId.CSS_011, Severity.SUPPRESSED);
       map.put(MessageId.CSS_012, Severity.USAGE);
       map.put(MessageId.CSS_013, Severity.USAGE);
@@ -136,11 +136,11 @@ public class MessageDictionary
       map.put(MessageId.HTM_013, Severity.USAGE);
       map.put(MessageId.HTM_014, Severity.WARNING);
       map.put(MessageId.HTM_014a, Severity.WARNING);
-      map.put(MessageId.HTM_015, Severity.WARNING);
-      map.put(MessageId.HTM_016, Severity.WARNING);
+      map.put(MessageId.HTM_015, Severity.SUPPRESSED);
+      map.put(MessageId.HTM_016, Severity.SUPPRESSED);
       map.put(MessageId.HTM_017, Severity.ERROR);
-      map.put(MessageId.HTM_018, Severity.ERROR);
-      map.put(MessageId.HTM_019, Severity.ERROR);
+      map.put(MessageId.HTM_018, Severity.USAGE);
+      map.put(MessageId.HTM_019, Severity.USAGE);
       map.put(MessageId.HTM_020, Severity.USAGE);
       map.put(MessageId.HTM_021, Severity.USAGE);
       map.put(MessageId.HTM_022, Severity.USAGE);
@@ -162,6 +162,7 @@ public class MessageDictionary
       map.put(MessageId.HTM_049, Severity.ERROR);
       map.put(MessageId.HTM_050, Severity.USAGE);
       map.put(MessageId.HTM_051, Severity.WARNING);
+      map.put(MessageId.HTM_052, Severity.ERROR);
 
       // Media
       map.put(MessageId.MED_001, Severity.ERROR);
@@ -175,16 +176,20 @@ public class MessageDictionary
       map.put(MessageId.NAV_001, Severity.ERROR);
       map.put(MessageId.NAV_002, Severity.USAGE);
       map.put(MessageId.NAV_003, Severity.ERROR);
-      map.put(MessageId.NAV_004, Severity.ERROR);
-      map.put(MessageId.NAV_005, Severity.WARNING);
-      map.put(MessageId.NAV_006, Severity.WARNING);
-      map.put(MessageId.NAV_007, Severity.WARNING);
-      map.put(MessageId.NAV_008, Severity.WARNING);
+      map.put(MessageId.NAV_004, Severity.USAGE);
+      map.put(MessageId.NAV_005, Severity.USAGE);
+      map.put(MessageId.NAV_006, Severity.USAGE);
+      map.put(MessageId.NAV_007, Severity.USAGE);
+      map.put(MessageId.NAV_008, Severity.USAGE);
+      map.put(MessageId.NAV_009, Severity.ERROR);
 
       // NCX
+      map.put(MessageId.NCX_001, Severity.USAGE);
       map.put(MessageId.NCX_002, Severity.ERROR);
       map.put(MessageId.NCX_003, Severity.USAGE);
+      map.put(MessageId.NCX_004, Severity.USAGE);
       map.put(MessageId.NCX_005, Severity.USAGE);
+      map.put(MessageId.NCX_006, Severity.USAGE);
 
       // OPF
       map.put(MessageId.OPF_001, Severity.ERROR);
@@ -263,6 +268,19 @@ public class MessageDictionary
       map.put(MessageId.OPF_069, Severity.ERROR);
       map.put(MessageId.OPF_070, Severity.WARNING);
       map.put(MessageId.OPF_071, Severity.ERROR);
+      map.put(MessageId.OPF_072, Severity.USAGE);
+      map.put(MessageId.OPF_073, Severity.ERROR);
+      map.put(MessageId.OPF_074, Severity.ERROR);
+      map.put(MessageId.OPF_075, Severity.ERROR);
+      map.put(MessageId.OPF_076, Severity.ERROR);
+      map.put(MessageId.OPF_077, Severity.WARNING);
+      map.put(MessageId.OPF_078, Severity.ERROR);
+      map.put(MessageId.OPF_079, Severity.WARNING);
+      map.put(MessageId.OPF_080, Severity.WARNING);
+      map.put(MessageId.OPF_081, Severity.ERROR);
+      map.put(MessageId.OPF_082, Severity.ERROR);
+      map.put(MessageId.OPF_083, Severity.ERROR);
+      map.put(MessageId.OPF_084, Severity.ERROR);
 
       // PKG
       map.put(MessageId.PKG_001, Severity.WARNING);
@@ -295,10 +313,11 @@ public class MessageDictionary
       map.put(MessageId.RSC_005, Severity.ERROR);
       map.put(MessageId.RSC_006, Severity.ERROR);
       map.put(MessageId.RSC_007, Severity.ERROR);
+      map.put(MessageId.RSC_007w, Severity.WARNING);
       map.put(MessageId.RSC_008, Severity.ERROR);
       map.put(MessageId.RSC_009, Severity.ERROR);
       map.put(MessageId.RSC_010, Severity.ERROR);
-      map.put(MessageId.RSC_011, Severity.WARNING);
+      map.put(MessageId.RSC_011, Severity.ERROR);
       map.put(MessageId.RSC_012, Severity.ERROR);
       map.put(MessageId.RSC_013, Severity.ERROR);
       map.put(MessageId.RSC_014, Severity.ERROR);
@@ -307,6 +326,10 @@ public class MessageDictionary
       map.put(MessageId.RSC_017, Severity.WARNING);
       map.put(MessageId.RSC_018, Severity.WARNING);
       map.put(MessageId.RSC_019, Severity.WARNING);
+      map.put(MessageId.RSC_020, Severity.ERROR);
+      map.put(MessageId.RSC_021, Severity.ERROR);
+      map.put(MessageId.RSC_022, Severity.INFO);
+      map.put(MessageId.RSC_023, Severity.WARNING);
 
       // Scripting
       map.put(MessageId.SCP_001, Severity.USAGE);
@@ -361,7 +384,7 @@ public class MessageDictionary
         {
           if (1 == lineNumber)
           {
-            if (line.toLowerCase().startsWith("id"))
+            if (line.toLowerCase(Locale.ROOT).startsWith("id"))
             {
               // optionally eat the first line
               continue;
@@ -404,8 +427,7 @@ public class MessageDictionary
                   message.getMessage(), fields[2]);
               if (messageText == null)
               {
-                report.message(MessageId.CHK_004,
-                    EPUBLocation.create("", lineNumber, 0, fields[2]),
+                report.message(MessageId.CHK_004, EPUBLocation.create("", lineNumber, 0, fields[2]),
                     PathUtil.removeWorkingDirectory(overrideFile.getAbsolutePath()));
                 continue;
               }
@@ -428,17 +450,15 @@ public class MessageDictionary
                   message.getSuggestion(), fields[3]);
               if (suggestionText == null)
               {
-                report.message(MessageId.CHK_005,
-                    EPUBLocation.create("", lineNumber, 0, fields[3]),
+                report.message(MessageId.CHK_005, EPUBLocation.create("", lineNumber, 0, fields[3]),
                     PathUtil.removeWorkingDirectory(overrideFile.getAbsolutePath()));
                 continue;
               }
             }
 
-            if (message != null
-                && ((newSeverity != message.getSeverity())
-                    || (messageText.compareTo(message.getMessage()) != 0) || (suggestionText
-                    .compareTo(message.getSuggestion()) != 0)))
+            if (message != null && ((newSeverity != message.getSeverity())
+                || (messageText.compareTo(message.getMessage()) != 0)
+                || (suggestionText.compareTo(message.getSuggestion()) != 0)))
             {
               messages.put(id, new Message(message.getID(), newSeverity, message.getSeverity(),
                   messageText, suggestionText));
@@ -507,12 +527,11 @@ public class MessageDictionary
           }
         } catch (NumberFormatException ex)
         {
-          String pathAdjustedFileName = PathUtil.removeWorkingDirectory(overrideFile
-              .getAbsolutePath());
-          report
-              .message(MessageId.CHK_006,
-                  EPUBLocation.create("", lineNumber, absoluteColumnNumber, text),
-                  pathAdjustedFileName);
+          String pathAdjustedFileName = PathUtil
+              .removeWorkingDirectory(overrideFile.getAbsolutePath());
+          report.message(MessageId.CHK_006,
+              EPUBLocation.create("", lineNumber, absoluteColumnNumber, text),
+              pathAdjustedFileName);
         }
       }
     }
@@ -576,9 +595,9 @@ public class MessageDictionary
   {
     public ResourceBundle newBundle(String baseName, Locale locale, String format,
         ClassLoader loader, boolean reload)
-      throws IllegalAccessException,
-      InstantiationException,
-      IOException
+          throws IllegalAccessException,
+          InstantiationException,
+          IOException
     {
       // The below is a copy of the default implementation.
       String bundleName = toBundleName(baseName, locale);
@@ -608,8 +627,8 @@ public class MessageDictionary
         {
           // Only this line is changed to make it to read properties files as
           // UTF-8.
-          bundle = new PropertyResourceBundle(new BufferedReader(new InputStreamReader(stream,
-              Charsets.UTF_8)));
+          bundle = new PropertyResourceBundle(
+              new BufferedReader(new InputStreamReader(stream, Charsets.UTF_8)));
         } finally
         {
           stream.close();

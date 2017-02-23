@@ -36,8 +36,6 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
     super("/30/epub/");
   }
 
-  // TODO -- check for fallback cycles
-
   @Test
   public void testValidateEPUBPFallbackCycle()
   {
@@ -174,17 +172,7 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
   public void testValidateEPUB30Issue203()
   {
     Collections.addAll(expectedErrors, MessageId.HTM_004);
-    Collections.addAll(expectedWarnings, MessageId.HTM_015);
     testValidateDocument("invalid/issue203.epub");
-  }
-
-  @Test
-  public void testValidateEPUB30Issue176()
-  {
-    Collections.addAll(expectedErrors, MessageId.RSC_001, MessageId.RSC_001, MessageId.RSC_001,
-        MessageId.RSC_001);
-    Collections.addAll(expectedWarnings, MessageId.HTM_016, MessageId.HTM_016, MessageId.HTM_016);
-    testValidateDocument("invalid/issue176.epub");
   }
 
   @Test
@@ -220,13 +208,14 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
   public void testDuplicateZipEntriesIssue265()
   {
     // duplicate entries should raise an error
+    Collections.addAll(expectedErrors, MessageId.OPF_060);
     testValidateDocument("invalid/issue265.epub");
   }
 
   @Test
   public void testDuplicateZipEntriesIssue265b()
   {
-    Collections.addAll(expectedWarnings, MessageId.OPF_003, MessageId.PKG_012, MessageId.OPF_061,
+    Collections.addAll(expectedWarnings, MessageId.OPF_061, MessageId.OPF_003, MessageId.PKG_012,
         MessageId.PKG_012);
     // non-unique entry names (after NFC normalization) should raise a warning
     testValidateDocument("invalid/issue265b.epub");
@@ -276,7 +265,8 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
   @Test
   public void testEdupub_ToCInvalid_NoFullToC()
   {
-    Collections.addAll(expectedErrors, MessageId.NAV_004);
+    // TODO re-enable NAV_004 as a WARNING or ERROR when the spec clearer  
+    // Collections.addAll(expectedWarnings, MessageId.NAV_004);
     testValidateDocument("invalid/edupub-toc-missing-branches.epub", EPUBProfile.EDUPUB);
   }
 
@@ -315,6 +305,20 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
   }
 
   @Test
+  public void testRenditions_Invalid_NoSelection()
+  {
+    Collections.addAll(expectedWarnings, MessageId.RSC_017);
+    testValidateDocument("invalid/multiple-renditions-noselection.epub");
+  }
+
+  @Test
+  public void testRenditions_Invalid_RenditionValueEmpty()
+  {
+    Collections.addAll(expectedErrors, MessageId.RSC_005, MessageId.RSC_005);
+    testValidateDocument("invalid/issue727_rendition-empty.epub");
+  }
+
+  @Test
   public void testEdupubRenditions()
   {
     testValidateDocument("valid/edupub-multiple-renditions.epub");
@@ -326,7 +330,7 @@ public class Epub30CheckTest extends AbstractEpubCheckTest
     Collections.addAll(expectedErrors, MessageId.RSC_005);
     testValidateDocument("invalid/edupub-multiple-renditions-nodctype-pub.epub");
   }
-  
+
   @Test
   public void testEdupubRenditions_Invalid_NoRenditionDCType()
   {

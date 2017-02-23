@@ -1,20 +1,24 @@
 package com.adobe.epubcheck.ctc;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Scanner;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 import com.adobe.epubcheck.api.EPUBLocation;
 import com.adobe.epubcheck.api.Report;
 import com.adobe.epubcheck.messages.MessageId;
 import com.adobe.epubcheck.ocf.EncryptionFilter;
 import com.adobe.epubcheck.util.EPUBVersion;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 class EntitySearch
 {
@@ -38,7 +42,7 @@ class EntitySearch
 
     legalEntities2_0 = new HashSet<String>();
     Collections.addAll(legalEntities2_0, "&nbsp;", "&iexcl;", "&cent;", "&pound;", "&curren;",
-        "&yen;", "&brvbar", "&sect;", "&uml;", "&copy;", "&ordf;", "&laquo;", "&not;", "&shy;", "&reg;",
+        "&yen;", "&brvbar;", "&sect;", "&uml;", "&copy;", "&ordf;", "&laquo;", "&not;", "&shy;", "&reg;",
         "&macr;", "&deg;", "&plusmn;", "&sup2;", "&sup3;", "&acute;", "&micro;", "&para;", "&middot;", "&cedil;",
         "&sup1;", "&ordm;", "&raquo;", "&frac14;", "&frac12;", "&frac34;", "&iquest;", "&Agrave;", "&Aacute;",
         "&Acirc;", "&Atilde;", "&Auml;", "&Aring;", "&AElig;", "&Ccedil;", "&Egrave;", "&Eacute;", "&Ecirc;", "&Euml;",
@@ -98,10 +102,11 @@ class EntitySearch
   {
     Vector<String> result = new Vector<String>();
     InputStream is = null;
+    Scanner in = null;
     try
     {
       is = getInputStream(entry);
-      Scanner in = new Scanner(is);
+      in = new Scanner(is);
       int lineCounter = 1;
 
       while (in.hasNextLine())
@@ -180,6 +185,9 @@ class EntitySearch
         catch (Exception ignored)
         {
         }
+      }
+      if (in != null) {
+	    in.close();
       }
     }
     return result;

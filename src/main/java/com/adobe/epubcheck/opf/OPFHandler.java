@@ -45,6 +45,7 @@ import com.adobe.epubcheck.xml.XMLHandler;
 import com.adobe.epubcheck.xml.XMLParser;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
@@ -269,65 +270,67 @@ public class OPFHandler implements XMLHandler
       else if (name.equals("item"))
       {
         String id = e.getAttribute("id");
-        String href = e.getAttribute("href");
-        if (href != null
-            && !(context.version == EPUBVersion.VERSION_3 && href.matches("^[^:/?#]+://.*")))
-        {
-          try
-          {
-            href = PathUtil.resolveRelativeReference(path, href, null);
-          } catch (IllegalArgumentException ex)
-          {
-            report.message(MessageId.OPF_010,
-                EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber(), href),
-                ex.getMessage());
-            href = null;
-          }
-        }
-        if (href != null && href.matches("^[^:/?#]+://.*"))
-        {
-
-          report.info(path, FeatureEnum.REFERENCE, href);
-        }
-        String mimeType = e.getAttribute("media-type");
-        String fallback = e.getAttribute("fallback");
-
-        // dirty fix for issue 271: treat @fallback attribute in EPUB3 like
-        // fallback-style in EPUB2
-        // then all the epubcheck mechanisms on checking stylesheet fallbacks
-        // will work as in EPUB 2
-        String fallbackStyle = (context.version == EPUBVersion.VERSION_3) ? e
-            .getAttribute("fallback") : e.getAttribute("fallback-style");
-
-        if (context.version == EPUBVersion.VERSION_3 && href.matches("^[^:/?#]+://.*")
-            && !OPFChecker30.isBlessedAudioType(mimeType)
-            && !OPFChecker30.isBlessedVideoType(mimeType))
-        {
-          if (OPFChecker30.isCoreMediaType(mimeType))
-          {
-            report.message(MessageId.RSC_006,
-                EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber()), href);
-          }
-          else
-          {
-            // mgy 20120414: this shouldn't even be a warning
-            // report.warning(
-            // path,
-            // parser.getLineNumber(),
-            // parser.getColumnNumber(),
-            // "Remote resource not validated");
-          }
-        }
-
-        OPFItem.Builder itemBuilder = new OPFItem.Builder(id, href, mimeType,
-            parser.getLineNumber(), parser.getColumnNumber()).fallback(fallback).fallbackStyle(
-            fallbackStyle);
-
-        itemBuilders.put(id, itemBuilder);
-        itemBuildersByPath.put(href, itemBuilder);
-
         if (id != null)
         {
+          String href = e.getAttribute("href");
+          if (href != null
+              && !(context.version == EPUBVersion.VERSION_3 && href.matches("^[^:/?#]+://.*")))
+          {
+            try
+            {
+              href = PathUtil.resolveRelativeReference(path, href, null);
+            } catch (IllegalArgumentException ex)
+            {
+              report
+                  .message(MessageId.OPF_010, EPUBLocation.create(path, parser.getLineNumber(),
+                      parser.getColumnNumber(), href), ex.getMessage());
+              href = null;
+            }
+          }
+          if (href != null && href.matches("^[^:/?#]+://.*"))
+          {
+
+            report.info(path, FeatureEnum.REFERENCE, href);
+          }
+          String mimeType = e.getAttribute("media-type");
+          String fallback = e.getAttribute("fallback");
+
+          // dirty fix for issue 271: treat @fallback attribute in EPUB3 like
+          // fallback-style in EPUB2
+          // then all the epubcheck mechanisms on checking stylesheet fallbacks
+          // will work as in EPUB 2
+          String fallbackStyle = (context.version == EPUBVersion.VERSION_3) ? e
+              .getAttribute("fallback") : e.getAttribute("fallback-style");
+
+          if (context.version == EPUBVersion.VERSION_3 && href.matches("^[^:/?#]+://.*")
+              && !OPFChecker30.isBlessedAudioType(mimeType)
+              && !OPFChecker30.isBlessedVideoType(mimeType))
+          {
+            if (OPFChecker30.isCoreMediaType(mimeType))
+            {
+              report
+                  .message(MessageId.RSC_006,
+                      EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber()),
+                      href);
+            }
+            else
+            {
+              // mgy 20120414: this shouldn't even be a warning
+              // report.warning(
+              // path,
+              // parser.getLineNumber(),
+              // parser.getColumnNumber(),
+              // "Remote resource not validated");
+            }
+          }
+
+          OPFItem.Builder itemBuilder = new OPFItem.Builder(id, href, mimeType,
+              parser.getLineNumber(), parser.getColumnNumber()).fallback(fallback).fallbackStyle(
+              fallbackStyle);
+
+          itemBuilders.put(id.trim(), itemBuilder);
+          itemBuildersByPath.put(href, itemBuilder);
+
           report.info(href, FeatureEnum.UNIQUE_IDENT, id);
         }
       }
@@ -342,7 +345,7 @@ public class OPFHandler implements XMLHandler
           {
             href = PathUtil.resolveRelativeReference(path, href, null);
             context.xrefChecker.get().registerReference(path, parser.getLineNumber(),
-                parser.getColumnNumber(), href, XRefChecker.RT_GENERIC);
+                parser.getColumnNumber(), href, XRefChecker.Type.GENERIC);
           } catch (IllegalArgumentException ex)
           {
             report.message(MessageId.OPF_010,
@@ -374,9 +377,9 @@ public class OPFHandler implements XMLHandler
         String idref = e.getAttribute("toc");
         if (idref != null)
         {
-          if (itemBuilders.containsKey(idref))
+          if (itemBuilders.containsKey(idref.trim()))
           {
-            OPFItem.Builder toc = itemBuilders.get(idref);
+            OPFItem.Builder toc = itemBuilders.get(idref.trim());
             toc.ncx();
           }
           else
@@ -396,10 +399,10 @@ public class OPFHandler implements XMLHandler
         String idref = e.getAttribute("idref");
         if (idref != null)
         {
-          if (itemBuilders.containsKey(idref))
+          if (itemBuilders.containsKey(idref.trim()))
           {
-            spineIDs.add(idref);
-            OPFItem.Builder item = itemBuilders.get(idref);
+            spineIDs.add(idref.trim());
+            OPFItem.Builder item = itemBuilders.get(idref.trim());
             if (item != null)
             {
               item.inSpine();
@@ -496,7 +499,7 @@ public class OPFHandler implements XMLHandler
       if (name.equals("identifier"))
       {
         String idAttr = e.getAttribute("id");
-        if (idAttr != null && !idAttr.equals("") && idAttr.equals(uniqueIdent))
+        if (idAttr != null && !idAttr.equals("") && idAttr.trim().equals(uniqueIdent))
         {
           String idval = (String) e.getPrivateData();
           // if (idval != null && ocf != null)
@@ -591,52 +594,47 @@ public class OPFHandler implements XMLHandler
           }
         }
       }
-      else if (name.equals("creator"))
+      else
       {
-        String value = (String) e.getPrivateData();
-        if (value != null)
+
+        Optional<String> value = Optional.fromNullable(Strings.emptyToNull(Strings.nullToEmpty(
+            (String) e.getPrivateData()).trim()));
+
+        // Check for empty metadta (USAGE) in EPUB 2
+        // Empty metadata is forbidden and checked with schema in EPUB 3
+        if (context.version == EPUBVersion.VERSION_2 && !value.isPresent())
         {
-          report.info(null, FeatureEnum.DC_CREATOR, value.trim());
+          report.message(MessageId.OPF_072,
+              EPUBLocation.create(path, parser.getLineNumber(), parser.getColumnNumber()), "dc:"
+                  + name);
         }
-      }
-      else if (name.equals("contributor"))
-      {
-        String value = (String) e.getPrivateData();
-        if (value != null)
+        // Report metadata
+        else if (value.isPresent())
         {
-          report.info(null, FeatureEnum.DC_CONTRIBUTOR, value.trim());
-        }
-      }
-      else if (name.equals("publisher"))
-      {
-        String value = (String) e.getPrivateData();
-        if (value != null)
-        {
-          report.info(null, FeatureEnum.DC_PUBLISHER, value.trim());
-        }
-      }
-      else if (name.equals("rights"))
-      {
-        String value = (String) e.getPrivateData();
-        if (value != null)
-        {
-          report.info(null, FeatureEnum.DC_RIGHTS, value.trim());
-        }
-      }
-      else if (name.equals("subject"))
-      {
-        String value = (String) e.getPrivateData();
-        if (value != null)
-        {
-          report.info(null, FeatureEnum.DC_SUBJECT, value.trim());
-        }
-      }
-      else if (name.equals("description"))
-      {
-        String value = (String) e.getPrivateData();
-        if (value != null)
-        {
-          report.info(null, FeatureEnum.DC_DESCRIPTION, value.trim());
+          if (name.equals("creator"))
+          {
+            report.info(null, FeatureEnum.DC_CREATOR, value.get());
+          }
+          else if (name.equals("contributor"))
+          {
+            report.info(null, FeatureEnum.DC_CONTRIBUTOR, value.get());
+          }
+          else if (name.equals("publisher"))
+          {
+            report.info(null, FeatureEnum.DC_PUBLISHER, value.get());
+          }
+          else if (name.equals("rights"))
+          {
+            report.info(null, FeatureEnum.DC_RIGHTS, value.get());
+          }
+          else if (name.equals("subject"))
+          {
+            report.info(null, FeatureEnum.DC_SUBJECT, value.get());
+          }
+          else if (name.equals("description"))
+          {
+            report.info(null, FeatureEnum.DC_DESCRIPTION, value.get());
+          }
         }
       }
     }

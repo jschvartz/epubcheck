@@ -1,10 +1,15 @@
 #########################
 #### GENERAL or ROOT ####
 #########################
+
+# Transifex
+.transifexrc
+
 # Maven
 target/
 
 # Eclipse
+/bin/
 .classpath
 .project
 .settings/

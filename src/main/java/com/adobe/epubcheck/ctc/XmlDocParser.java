@@ -1,11 +1,18 @@
 package com.adobe.epubcheck.ctc;
 
-import com.adobe.epubcheck.api.EPUBLocation;
-import com.adobe.epubcheck.api.Report;
-import com.adobe.epubcheck.messages.MessageId;
-import com.adobe.epubcheck.ocf.EncryptionFilter;
-import com.adobe.epubcheck.util.EpubConstants;
-import com.adobe.epubcheck.util.NamespaceHelper;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Hashtable;
+import java.util.Stack;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -15,15 +22,12 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Hashtable;
-import java.util.Stack;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import com.adobe.epubcheck.api.EPUBLocation;
+import com.adobe.epubcheck.api.Report;
+import com.adobe.epubcheck.messages.MessageId;
+import com.adobe.epubcheck.ocf.EncryptionFilter;
+import com.adobe.epubcheck.util.EpubConstants;
+import com.adobe.epubcheck.util.NamespaceHelper;
 
 class XmlDocParser
 {
@@ -59,11 +63,15 @@ class XmlDocParser
     }
     catch (IOException e)
     {
-      report.message(MessageId.PKG_008, EPUBLocation.create(fileEntry), fileEntry);
+      // Ignore, should have been reported earlier
+      // report.message(MessageId.PKG_008, EPUBLocation.create(fileEntry),
+      // fileEntry);
     }
     catch (SAXException e)
     {
-      report.message(MessageId.RSC_005, EPUBLocation.create(fileEntry), e.getMessage());
+      // Ignore, should have been reported earlier
+      // report.message(MessageId.RSC_005, EPUBLocation.create(fileEntry),
+      // e.getMessage());
       doc = null;
     }
     finally
@@ -115,9 +123,13 @@ class XmlDocParser
       SAXParserFactory factory = SAXParserFactory.newInstance();
       factory.setFeature("http://xml.org/sax/features/namespaces", true); //default false
       factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);//default true
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       parser = factory.newSAXParser();
       //tell parser about the lexical handler
       DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+      docBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      docBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
       doc = docBuilder.newDocument();
     }

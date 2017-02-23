@@ -52,10 +52,11 @@ public class OPFItem
   private final boolean nav;
   private final boolean scripted;
   private final boolean linear;
+  private final boolean fixedLayout;
 
   private OPFItem(String id, String path, String mimetype, int lineNumber, int columnNumber,
       Optional<String> fallback, Optional<String> fallbackStyle, Set<Property> properties,
-      boolean ncx, boolean inSpine, boolean nav, boolean scripted, boolean linear)
+      boolean ncx, boolean inSpine, boolean nav, boolean scripted, boolean linear, boolean fxl)
   {
     this.id = id;
     this.path = path;
@@ -70,6 +71,7 @@ public class OPFItem
     this.nav = nav;
     this.scripted = scripted;
     this.linear = linear;
+    this.fixedLayout = fxl;
   }
 
   /**
@@ -215,6 +217,52 @@ public class OPFItem
   }
 
   /**
+   * Returns <code>true</code> iff this item is a Fixed-Layout Document.
+   * 
+   * @return <code>true</code> iff this item is a Fixed-Layout Document.
+   */
+  public boolean isFixedLayout()
+  {
+    return fixedLayout;
+  }
+
+  @Override
+  public String toString()
+  {
+    return path + "[" + id + "]";
+  }
+
+  @Override
+  public int hashCode()
+  {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((id == null) ? 0 : id.hashCode());
+    result = prime * result + ((path == null) ? 0 : path.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj)
+  {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    OPFItem other = (OPFItem) obj;
+    if (id == null)
+    {
+      if (other.id != null) return false;
+    }
+    else if (!id.equals(other.id)) return false;
+    if (path == null)
+    {
+      if (other.path != null) return false;
+    }
+    else if (!path.equals(other.path)) return false;
+    return true;
+  }
+
+  /**
    * A builder for {@link OPFItem}
    */
   public static final class Builder
@@ -230,6 +278,7 @@ public class OPFItem
     private boolean ncx = false;
     private boolean linear = true;
     private boolean inSpine = false;
+    private boolean fxl = false;
     private ImmutableSet.Builder<Property> propertiesBuilder = new ImmutableSet.Builder<Property>();
 
     /**
@@ -252,7 +301,7 @@ public class OPFItem
     {
       this.id = Preconditions.checkNotNull(id).trim();
       this.path = Preconditions.checkNotNull(path).trim();
-      this.mimeType = Preconditions.checkNotNull(mimeType).trim();
+      this.mimeType = Optional.fromNullable(mimeType).or("undefined").trim();
       this.lineNumber = lineNumber;
       this.columnNumber = columnNumber;
     }
@@ -267,6 +316,13 @@ public class OPFItem
     {
       this.fallbackStyle = fallbackStyle;
       return this;
+    }
+
+    public Builder fixedLayout()
+    {
+      this.fxl = true;
+      return this;
+
     }
 
     public Builder ncx()
@@ -305,22 +361,20 @@ public class OPFItem
       {
         this.propertiesBuilder.add(EpubCheckVocab.VOCAB.get(EpubCheckVocab.PROPERTIES.NON_LINEAR));
       }
+      if (fxl)
+      {
+        this.propertiesBuilder
+            .add(EpubCheckVocab.VOCAB.get(EpubCheckVocab.PROPERTIES.FIXED_LAYOUT));
+      }
       Set<Property> properties = propertiesBuilder.build();
 
-      return new OPFItem(
-          id,
-          path,
-          mimeType,
-          lineNumber,
-          columnNumber,
+      return new OPFItem(id, path, mimeType, lineNumber, columnNumber,
           Optional.fromNullable(Strings.emptyToNull(Strings.nullToEmpty(fallback).trim())),
           Optional.fromNullable(Strings.emptyToNull(Strings.nullToEmpty(fallbackStyle).trim())),
-          properties,
-          ncx,
-          inSpine,
+          properties, ncx, inSpine,
           properties.contains(PackageVocabs.ITEM_VOCAB.get(PackageVocabs.ITEM_PROPERTIES.NAV)),
           properties.contains(PackageVocabs.ITEM_VOCAB.get(PackageVocabs.ITEM_PROPERTIES.SCRIPTED)),
-          linear);
+          linear, fxl);
     }
   }
 }

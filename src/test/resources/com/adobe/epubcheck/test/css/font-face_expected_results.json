@@ -3,12 +3,12 @@
   "checker" : {
     "path" : "./target/test-classes/com/adobe/epubcheck/test/css/font-face.epub",
     "filename" : "font-face.epub",
-    "checkerVersion" : "4.0.0-alpha12-SNAPSHOT",
-    "checkDate" : "03-25-2015 10:06:37",
-    "elapsedTime" : 54,
+    "checkerVersion" : "4.0.3-SNAPSHOT",
+    "checkDate" : "12-18-2016 16:57:07",
+    "elapsedTime" : 53,
     "nFatal" : 0,
-    "nError" : 4,
-    "nWarning" : 2,
+    "nError" : 5,
+    "nWarning" : 1,
     "nUsage" : 13
   },
   "publication" : {
@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "3.0",
+    "ePubVersion" : "3.0.1",
     "isScripted" : false,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : true,
@@ -396,7 +396,7 @@
     "suggestion" : null
   }, {
     "ID" : "CSS-007",
-    "severity" : "WARNING",
+    "severity" : "INFO",
     "message" : "Font-face reference OPS/fonts/brankovic.ttf refers to non-standard font type application/x-font-truetype.",
     "additionalLocations" : 0,
     "locations" : [ {
@@ -479,7 +479,7 @@
   }, {
     "ID" : "CSS-025",
     "severity" : "USAGE",
-    "message" : "CSS class Selector is not found.",
+    "message" : "CSS class Selector could not be found.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/external_css.xhtml",
@@ -683,7 +683,7 @@
   }, {
     "ID" : "RSC-007",
     "severity" : "ERROR",
-    "message" : "Referenced resource is not found in the ePub.",
+    "message" : "Referenced resource 'OPS/fonts/badaboom.woff' could not be found in the EPUB.",
     "additionalLocations" : 0,
     "locations" : [ {
       "path" : "OPS/style_tag_css.xhtml",
@@ -692,14 +692,21 @@
       "context" : "OPS/fonts/badaboom.woff"
     }, {
       "path" : "OPS/styles/style.css",
-      "line" : 23,
-      "column" : 5,
-      "context" : "OPS/styles/fonts/bloody.woff"
-    }, {
-      "path" : "OPS/styles/style.css",
       "line" : 28,
       "column" : 5,
       "context" : "OPS/fonts/badaboom.woff"
+    } ],
+    "suggestion" : null
+  }, {
+    "ID" : "RSC-007",
+    "severity" : "ERROR",
+    "message" : "Referenced resource 'OPS/styles/fonts/bloody.woff' could not be found in the EPUB.",
+    "additionalLocations" : 0,
+    "locations" : [ {
+      "path" : "OPS/styles/style.css",
+      "line" : 23,
+      "column" : 5,
+      "context" : "OPS/styles/fonts/bloody.woff"
     } ],
     "suggestion" : null
   } ]

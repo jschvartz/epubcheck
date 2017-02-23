@@ -35,7 +35,9 @@
 			
 			<report test="count($headings) &gt; 1">More than one ranked heading found as direct descendant of body.</report>
 			
-			<report test="count($headings) = 1 and string-length(normalize-space($headings)) = 0">Empty ranked heading detected.</report>
+			<report test="count($headings) = 1 and string-length(normalize-space(concat($headings,$headings/html:img/@alt,$headings//@aria-label))) = 0">Empty ranked heading detected.</report>
+			
+			<report test="@aria-label and (normalize-space($headings) = normalize-space(@aria-label))">The value of the 'aria-label' attribute must not be the same as the content of the heading.</report>
 		</rule>
 		
 		
@@ -51,7 +53,9 @@
 			
 			<report test="count($headings) &gt; 1">More than one ranked heading found as direct descendant of <value-of select="name()"/>.</report>
 			
-			<report test="count($headings) = 1 and string-length(normalize-space($headings)) = 0">Empty ranked heading detected.</report>
+			<report test="count($headings) = 1 and string-length(normalize-space(concat($headings,$headings/html:img/@alt,$headings//@aria-label))) = 0">Empty ranked heading detected.</report>
+			
+			<report test="@aria-label and (normalize-space($headings) = normalize-space(@aria-label))">The value of the 'aria-label' attribute must not be the same as the content of the heading.</report>
 		</rule>
 		
 		<rule context="html:h1|html:h2|html:h3|html:h4|html:h5|html:h6">
@@ -68,7 +72,7 @@
 			<report test="ancestor::html:figure or ancestor::html:blockquote">Ranked headings are not valid in figure or blockquote</report>
 			
 			<!-- if the expected rank is below 6, check that it matches what is expected -->
-			<report test="$expected-rank &lt; 6 and not($current-rank = $expected-rank)">The heading rank h<value-of select="$current-rank"/> does match the current nesting level (<value-of select="$expected-rank"/>).</report>
+			<report test="$expected-rank &lt; 6 and not($current-rank = $expected-rank)">The heading rank h<value-of select="$current-rank"/> does not match the current nesting level (<value-of select="$expected-rank"/>).</report>
 			
 			<!-- otherwise, just stop testing after 5 and report any headings that aren't six, since no higher exist -->
 			<report test="$expected-rank &gt; 5 and $current-rank &lt; 6">The current heading rank should be h6.</report>

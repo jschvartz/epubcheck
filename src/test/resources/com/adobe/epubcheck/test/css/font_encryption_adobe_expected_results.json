@@ -5,11 +5,11 @@
     "filename" : "font_encryption_adobe.epub",
     "checkerVersion" : "4.0.0-alpha11-SNAPSHOT",
     "checkDate" : "09-05-2014 03:17:17",
-    "elapsedTime" : 59,
+    "elapsedTime" : 24,
     "nFatal" : 0,
     "nError" : 1,
     "nWarning" : 0,
-    "nUsage" : 5
+    "nUsage" : 6
   },
   "publication" : {
     "publisher" : "AMC",
@@ -26,7 +26,7 @@
     "renditionLayout" : "reflowable",
     "renditionOrientation" : "auto",
     "renditionSpread" : "auto",
-    "ePubVersion" : "2.0",
+    "ePubVersion" : "2.0.1",
     "isScripted" : false,
     "hasFixedFormat" : false,
     "isBackwardCompatible" : true,
@@ -153,10 +153,10 @@
     "id" : "ePubCheck.NoManifestRef:OEBPS/content.opf",
     "fileName" : "OEBPS/content.opf",
     "media_type" : null,
-    "compressedSize" : 558,
-    "uncompressedSize" : 1177,
+    "compressedSize" : 490,
+    "uncompressedSize" : 973,
     "compressionMethod" : "Deflated",
-    "checkSum" : "eb84bb96341d1badff8dee2b3c3aa97dd4322b7a05619668dae2cd77902517",
+    "checkSum" : "9a65deba089824eac48404fb4712e9f4e67f6d3961be92569b30b1869c317d",
     "isSpineItem" : false,
     "spineIndex" : null,
     "isLinear" : false,
@@ -305,6 +305,18 @@
       "path" : "OEBPS/am-font-test.html",
       "line" : -1,
       "column" : -1,
+      "context" : null
+    } ],
+    "suggestion" : null
+  }, {
+    "ID" : "NCX-006",
+    "severity" : "USAGE",
+    "message" : "Empty \"text\" label in the NCX document",
+    "additionalLocations" : 0,
+    "locations" : [ {
+      "path" : "OEBPS/toc.ncx",
+      "line" : 11,
+      "column" : 10,
       "context" : null
     } ],
     "suggestion" : null

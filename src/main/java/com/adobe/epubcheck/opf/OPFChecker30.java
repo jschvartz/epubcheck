@@ -22,6 +22,8 @@
 
 package com.adobe.epubcheck.opf;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -31,6 +33,7 @@ import com.adobe.epubcheck.api.EPUBProfile;
 import com.adobe.epubcheck.api.FeatureReport.Feature;
 import com.adobe.epubcheck.bitmap.BitmapCheckerFactory;
 import com.adobe.epubcheck.css.CSSCheckerFactory;
+import com.adobe.epubcheck.dict.SearchKeyMapCheckerFactory;
 import com.adobe.epubcheck.dtbook.DTBookCheckerFactory;
 import com.adobe.epubcheck.messages.MessageId;
 import com.adobe.epubcheck.opf.MetadataSet.Metadata;
@@ -42,6 +45,8 @@ import com.adobe.epubcheck.util.FeatureEnum;
 import com.adobe.epubcheck.vocab.DCMESVocab;
 import com.adobe.epubcheck.vocab.PackageVocabs;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 
 public class OPFChecker30 extends OPFChecker implements DocumentValidator
@@ -56,6 +61,8 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
   protected void initContentCheckerFactoryMap()
   {
     HashMap<String, ContentCheckerFactory> map = new HashMap<String, ContentCheckerFactory>();
+    map.put("application/vnd.epub.search-key-map+xml", SearchKeyMapCheckerFactory.getInstance());
+    map.put("application/smil+xml", OverlayCheckerFactory.getInstance());
     map.put("application/xhtml+xml", OPSCheckerFactory.getInstance());
     map.put("application/x-dtbook+xml", DTBookCheckerFactory.getInstance());
     map.put("image/jpeg", BitmapCheckerFactory.getInstance());
@@ -63,7 +70,6 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
     map.put("image/png", BitmapCheckerFactory.getInstance());
     map.put("image/svg+xml", OPSCheckerFactory.getInstance());
     map.put("text/css", CSSCheckerFactory.getInstance());
-    map.put("application/smil+xml", OverlayCheckerFactory.getInstance());
     contentCheckerFactoryMap.clear();
     contentCheckerFactoryMap.putAll(map);
   }
@@ -78,9 +84,11 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
   public void runChecks()
   {
     super.runChecks();
+    checkCollectionsContent();
     checkPagination();
     checkSemantics();
     checkNav();
+    checkSpecifics();
   }
 
   @Override
@@ -123,20 +131,22 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
           EPUBLocation.create(path, item.getLineNumber(), item.getColumnNumber()), item.getPath());
     }
 
-    if (item.getFallback().isPresent())
-    {
-      if (!opfHandler.getItemById(item.getFallback().get()).isPresent())
-      {
-        report.message(MessageId.OPF_040,
-            EPUBLocation.create(path, item.getLineNumber(), item.getColumnNumber()));
-      }
-    }
+    // Note: item fallback existence is checked in schematron, i.e.:
+    // opfHandler.getItemById(item.getFallback().get()).isPresent() == true
+
   }
 
   @Override
   protected void checkSpineItem(OPFItem item, OPFHandler opfHandler)
   {
     String mimeType = item.getMimeType();
+
+    if (item.getProperties()
+        .contains(PackageVocabs.ITEM_VOCAB.get(PackageVocabs.ITEM_PROPERTIES.DATA_NAV)))
+    {
+      report.message(MessageId.OPF_077,
+          EPUBLocation.create(path, item.getLineNumber(), item.getColumnNumber()));
+    }
 
     if (isBlessedItemType(mimeType, version))
     {
@@ -169,10 +179,8 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
       OPFItem handler = opfHandler.getItemById(handlerId).get();
       if (!handler.isScripted())
       {
-        report.message(
-            MessageId.OPF_046,
-            EPUBLocation.create(handler.getPath(), handler.getLineNumber(),
-                handler.getColumnNumber()));
+        report.message(MessageId.OPF_046, EPUBLocation.create(handler.getPath(),
+            handler.getLineNumber(), handler.getColumnNumber()));
       }
     }
   }
@@ -196,17 +204,104 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
 
   private void checkCollections()
   {
-    for (ResourceCollection collection : ((OPFHandler30) opfHandler).getCollections().getByRole(
-        ResourceCollection.Roles.INDEX))
+    for (ResourceCollection collection : ((OPFHandler30) opfHandler).getCollections().asList())
     {
-      checkIndexCollection(collection);
+      if (collection.hasRole(ResourceCollection.Roles.DICTIONARY))
+      {
+        checkDictCollection(collection);
+      }
+      if (collection.hasRole(ResourceCollection.Roles.INDEX))
+      {
+        checkIndexCollection(collection);
+      }
+      if (collection.hasRole(ResourceCollection.Roles.PREVIEW))
+      {
+        checkPreviewCollection(collection);
+      }
     }
 
   }
 
+  private void checkCollectionsContent()
+  {
+    for (ResourceCollection collection : ((OPFHandler30) opfHandler).getCollections().asList())
+    {
+      if (collection.hasRole(ResourceCollection.Roles.DICTIONARY))
+      {
+        checkDictCollectionContent(collection);
+      }
+    }
+
+  }
+
+  private void checkDictCollection(ResourceCollection collection)
+  {
+    if (collection.hasRole(Roles.DICTIONARY))
+    {
+      boolean skmFound = false;
+      for (LinkedResource resource : collection.getResources().asList())
+      {
+        Optional<OPFItem> item = opfHandler.getItemByPath(resource.getPath());
+        if (!item.isPresent())
+        {
+          report.message(MessageId.OPF_081, EPUBLocation.create(path), resource.getPath());
+        }
+        else if ("application/vnd.epub.search-key-map+xml".equals(item.get().getMimeType()))
+        {
+          if (skmFound)
+          {
+            // More than one Search Key Map
+            report.message(MessageId.OPF_082, EPUBLocation.create(path));
+          }
+          skmFound = true;
+        }
+        else if (!"application/xhtml+xml".equals(item.get().getMimeType()))
+        {
+          report.message(MessageId.OPF_084, EPUBLocation.create(path), resource.getPath());
+        }
+      }
+      if (!skmFound)
+      {
+        // No Search Key Map
+        report.message(MessageId.OPF_083, EPUBLocation.create(path));
+      }
+    }
+  }
+
+  private void checkDictCollectionContent(ResourceCollection collection)
+  {
+    if (collection.hasRole(Roles.DICTIONARY))
+    {
+      boolean dictFound = false;
+      for (LinkedResource resource : collection.getResources().asList())
+      {
+        final Optional<OPFItem> item = opfHandler.getItemByPath(resource.getPath());
+        if (!dictFound && item.isPresent()
+            && "application/xhtml+xml".equals(item.get().getMimeType()))
+        {
+          // Search if this resource was reported as DICTIONARY content
+          dictFound = Iterables.tryFind(context.featureReport.getFeature(FeatureEnum.DICTIONARY),
+              new Predicate<Feature>()
+              {
+
+                @Override
+                public boolean apply(Feature dict)
+                {
+                  return item.get().getPath().equals(dict.getLocation().get().getPath());
+                }
+              }).isPresent();
+        }
+      }
+      if (!dictFound)
+      {
+        // No Dictionary content
+        report.message(MessageId.OPF_078, EPUBLocation.create(path));
+      }
+    }
+  }
+
   private void checkIndexCollection(ResourceCollection collection)
   {
-
     if (collection.hasRole(Roles.INDEX) || collection.hasRole(Roles.INDEX_GROUP))
     {
       for (LinkedResource resource : collection.getResources().asList())
@@ -220,6 +315,37 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
       for (ResourceCollection childCollection : collection.getCollections().asList())
       {
         checkIndexCollection(childCollection);
+      }
+    }
+  }
+
+  private void checkPreviewCollection(ResourceCollection collection)
+  {
+
+    if (collection.hasRole(Roles.PREVIEW))
+    {
+      for (LinkedResource resource : collection.getResources().asList())
+      {
+        Optional<OPFItem> item = opfHandler.getItemByPath(resource.getPath());
+        if (!item.isPresent() || !("application/xhtml+xml".equals(item.get().getMimeType())
+            || "image/svg+xml".equals(item.get().getMimeType())))
+        {
+          report.message(MessageId.OPF_075, EPUBLocation.create(path));
+        }
+        else
+        {
+          try
+          {
+            URI uri = new URI(resource.getURI());
+            if (Optional.fromNullable(uri.getFragment()).or("").startsWith("epubcfi("))
+            {
+              report.message(MessageId.OPF_076, EPUBLocation.create(path));
+            }
+          } catch (URISyntaxException e)
+          {
+            report.message(MessageId.RSC_020, EPUBLocation.create(path));
+          }
+        }
       }
     }
 
@@ -249,8 +375,8 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
           report.message(MessageId.NAV_003, EPUBLocation.create(path));
         }
         // Search a "dc:source" metadata expression
-        Set<Metadata> dcSourceMetas = ((OPFHandler30) opfHandler).getMetadata().getPrimary(
-            DCMESVocab.VOCAB.get(DCMESVocab.PROPERTIES.SOURCE));
+        Set<Metadata> dcSourceMetas = ((OPFHandler30) opfHandler).getMetadata()
+            .getPrimary(DCMESVocab.VOCAB.get(DCMESVocab.PROPERTIES.SOURCE));
         if (dcSourceMetas.isEmpty())
         {
           report.message(MessageId.OPF_066, EPUBLocation.create(path));
@@ -276,9 +402,8 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
       if (context.featureReport.hasFeature(FeatureEnum.HAS_MICRODATA)
           && !context.featureReport.hasFeature(FeatureEnum.HAS_RDFA))
       {
-        report.message(MessageId.HTM_051,
-            context.featureReport.getFeature(FeatureEnum.HAS_MICRODATA).iterator().next()
-                .getLocation().get());
+        report.message(MessageId.HTM_051, context.featureReport
+            .getFeature(FeatureEnum.HAS_MICRODATA).iterator().next().getLocation().get());
       }
     }
   }
@@ -291,32 +416,49 @@ public class OPFChecker30 extends OPFChecker implements DocumentValidator
       Set<Feature> tocLinks = context.featureReport.getFeature(FeatureEnum.TOC_LINKS);
       if (sections.size() != tocLinks.size())
       {
-        report.message(MessageId.NAV_004, tocLinks.isEmpty() ? EPUBLocation.create(path) : tocLinks
-            .iterator().next().getLocation().get());
+        report.message(MessageId.NAV_004, tocLinks.isEmpty() ? EPUBLocation.create(path)
+            : tocLinks.iterator().next().getLocation().get());
       }
       if (context.featureReport.hasFeature(FeatureEnum.AUDIO)
           && !context.featureReport.hasFeature(FeatureEnum.LOA))
       {
-        report.message(MessageId.NAV_005, tocLinks.isEmpty() ? EPUBLocation.create(path) : tocLinks
-            .iterator().next().getLocation().get());
+        report.message(MessageId.NAV_005, tocLinks.isEmpty() ? EPUBLocation.create(path)
+            : tocLinks.iterator().next().getLocation().get());
       }
       if (context.featureReport.hasFeature(FeatureEnum.FIGURE)
           && !context.featureReport.hasFeature(FeatureEnum.LOI))
       {
-        report.message(MessageId.NAV_006, tocLinks.isEmpty() ? EPUBLocation.create(path) : tocLinks
-            .iterator().next().getLocation().get());
+        report.message(MessageId.NAV_006, tocLinks.isEmpty() ? EPUBLocation.create(path)
+            : tocLinks.iterator().next().getLocation().get());
       }
       if (context.featureReport.hasFeature(FeatureEnum.TABLE)
           && !context.featureReport.hasFeature(FeatureEnum.LOT))
       {
-        report.message(MessageId.NAV_007, tocLinks.isEmpty() ? EPUBLocation.create(path) : tocLinks
-            .iterator().next().getLocation().get());
+        report.message(MessageId.NAV_007, tocLinks.isEmpty() ? EPUBLocation.create(path)
+            : tocLinks.iterator().next().getLocation().get());
       }
       if (context.featureReport.hasFeature(FeatureEnum.VIDEO)
           && !context.featureReport.hasFeature(FeatureEnum.LOV))
       {
-        report.message(MessageId.NAV_008, tocLinks.isEmpty() ? EPUBLocation.create(path) : tocLinks
-            .iterator().next().getLocation().get());
+        report.message(MessageId.NAV_008, tocLinks.isEmpty() ? EPUBLocation.create(path)
+            : tocLinks.iterator().next().getLocation().get());
+      }
+    }
+  }
+
+  private void checkSpecifics()
+  {
+    if (context.featureReport.hasFeature(FeatureEnum.DICTIONARY)
+        && !context.pubTypes.contains(OPFData.DC_TYPE_DICT))
+    {
+      report.message(MessageId.OPF_079, context.featureReport.getFeature(FeatureEnum.DICTIONARY)
+          .iterator().next().getLocation().get());
+    }
+    if (context.profile == EPUBProfile.DICT || context.pubTypes.contains(OPFData.DC_TYPE_DICT))
+    {
+      if (!context.featureReport.hasFeature(FeatureEnum.DICTIONARY))
+      {
+        report.message(MessageId.OPF_078, EPUBLocation.create(path));
       }
     }
   }

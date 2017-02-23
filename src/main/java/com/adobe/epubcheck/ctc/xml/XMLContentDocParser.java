@@ -1,18 +1,5 @@
 package com.adobe.epubcheck.ctc.xml;
 
-import com.adobe.epubcheck.api.EPUBLocation;
-import com.adobe.epubcheck.api.Report;
-import com.adobe.epubcheck.messages.MessageId;
-import com.adobe.epubcheck.ocf.EncryptionFilter;
-
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.DefaultHandler;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,6 +7,19 @@ import java.io.InputStream;
 import java.util.Hashtable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
+
+import com.adobe.epubcheck.api.EPUBLocation;
+import com.adobe.epubcheck.api.Report;
+import com.adobe.epubcheck.messages.MessageId;
+import com.adobe.epubcheck.ocf.EncryptionFilter;
 
 public class XMLContentDocParser
 {
@@ -43,6 +43,8 @@ public class XMLContentDocParser
       is = getInputStream(fileEntry);
 
       SAXParserFactory factory = SAXParserFactory.newInstance();
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       //factory.setValidating(false);
       //factory.setFeature("resolve-dtd-uris", false);
 
@@ -52,7 +54,6 @@ public class XMLContentDocParser
       parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
       parser.setFeature("http://xml.org/sax/features/validation", false);
       parser.setDTDHandler(handler);
-
       saxParser.parse(is, handler);
 
     }
@@ -70,11 +71,15 @@ public class XMLContentDocParser
     }
     catch (IOException e)
     {
-      report.message(MessageId.PKG_008, EPUBLocation.create(fileEntry), fileEntry);
+      // Ignore, should have been reported earlier
+      // report.message(MessageId.PKG_008, EPUBLocation.create(fileEntry),
+      // fileEntry);
     }
     catch (SAXException e)
     {
-      report.message(MessageId.RSC_005, EPUBLocation.create(fileEntry), e.getMessage());
+      // Ignore, should have been reported earlier
+      // report.message(MessageId.RSC_005, EPUBLocation.create(fileEntry),
+      // e.getMessage());
     }
     catch (ParserConfigurationException e)
     {
